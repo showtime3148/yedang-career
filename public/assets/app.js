@@ -130,8 +130,14 @@
     }).join("") + '</ul><aside class="aside-card"><h3>진로와 상관없이 모두 함께해요</h3>' + ul(SCHOOL.commonPrograms) +
       '<p class="src" style="margin-top:18px">자료: 2026학년도 예당고 교육계획서와 2026년 11월 학교 현황. 추진 중인 사업은 일정이 바뀔 수 있습니다.</p></aside></div>';
   }
+  function newsHTML() {
+    var n = SCHOOL.news; if (!n) return "";
+    var passed = n.status === "합격";
+    return '<div class="news"><div class="news-l"><span class="news-y">' + n.year + '학년도 ' + esc(n.title) + '</span><b>' + n.unis.map(esc).join(" · ") + " " + esc(n.dept) + '</b></div>' +
+      '<div class="news-r"><span class="news-badge">' + (passed ? "합격" : "수능 최저 모두 충족") + '</span><p>' + esc(passed ? n.year + "학년도 수시에서 " + n.unis.join("·") + " " + n.dept + "에 합격했습니다." : n.note) + "</p></div></div>";
+  }
   function resultsHTML() {
-    return '<div class="results">' + SCHOOL.results.map(function (r) {
+    return newsHTML() + '<div class="results">' + SCHOOL.results.map(function (r) {
       return '<article class="res-year"><h3>' + r.year + '학년도</h3>' +
         '<p class="res-k">서울 · 수도권</p><p class="res-v">' + r.metro.map(esc).join(", ") + ' 등</p>' +
         '<p class="res-k">교육대 · 사관학교</p><p class="res-v">' + r.special.map(esc).join(", ") + '</p>' +

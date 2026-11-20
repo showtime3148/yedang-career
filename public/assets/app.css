@@ -109,6 +109,12 @@ section.block + section.block { border-top: 1px solid var(--line); }
 .aside-card ul { margin: 0; padding-left: 18px; color: var(--ink); }
 .aside-card li { margin: 6px 0; font-size: 15px; }
 
+.news { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 24px; align-items: center; background: var(--pine); color: #fff; border-radius: var(--r-l); padding: 26px 30px; margin-bottom: 28px; }
+.news-y { display: block; font-size: 14px; color: #B8CFC0; font-weight: 700; margin-bottom: 4px; }
+.news-l b { font-size: clamp(24px, 3.2vw, 34px); letter-spacing: -.03em; line-height: 1.2; }
+.news-badge { display: inline-block; background: var(--sprout); color: var(--pine); font-weight: 800; font-size: 14px; padding: 4px 12px; border-radius: 999px; }
+.news-r p { margin: 10px 0 0; color: #DDEBE1; font-size: 15px; }
+@media (max-width: 760px) { .news { grid-template-columns: 1fr; padding: 22px; gap: 10px; } }
 .results { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-top: 3px solid var(--pine); }
 .res-year { padding: 22px 24px 24px 0; }
 .res-year + .res-year { padding-left: 24px; border-left: 1px solid var(--line); }

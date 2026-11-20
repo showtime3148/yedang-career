@@ -170,7 +170,7 @@
       '<ul class="suggest" id="suggest" role="listbox"></ul></div>' +
       '<div class="chips" aria-label="예시">' + SAMPLE.map(function (s) { return '<button type="button" class="chip" data-q="' + esc(s) + '">' + esc(s) + "</button>"; }).join("") + "</div></form>" +
       '<div class="hero-facts"><span><b>' + FIELDS.length + "개</b>진로 분야</span><span><b>" + jobsCount + "개</b>대표 직업 정보</span><span><b>2028</b>대입 기준</span></div>" +
-      "</div></section>" + quickMenu() +
+      "</div></section>" + quickMenu() + videosHTML() +
       '<section class="block" id="fields"><div class="wrap"><h2 class="h2">분야를 골라 둘러보기</h2><p class="sub">아직 장래희망이 없어도 괜찮아요. 끌리는 분야를 눌러 보세요.</p>' + groupsHTML() + "</div></section>" +
       campusTeaser() + resultsSection() + ctaBand() +
       '<section class="block"><div class="wrap"><h2 class="h2">예당고는 이런 학교예요</h2><p class="sub">보성 득량에 있는 기숙형 일반고. AI와 IB로 수업 방식을 바꾸고 있습니다.</p>' + schoolHTML() + "</div></section>" +
@@ -178,6 +178,7 @@
       savedHTML();
     bindSearch();
     bindSaved();
+    bindVideos();
   }
 
   function bindSearch() {
@@ -224,6 +225,34 @@
     setNav("game");
     main.innerHTML = '<div class="g-wrap"><div class="wrap" id="gameRoot"></div></div>' + ctaBand();
     window.YD.game.mount(document.getElementById("gameRoot"));
+  }
+  /* ───── 영상 ───── */
+  function videoSrc(url) {
+    var m = String(url || "").match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/))([\w-]{11})/);
+    if (m) return { kind: "yt", id: m[1], embed: "https://www.youtube-nocookie.com/embed/" + m[1] + "?autoplay=1&rel=0&playsinline=1", thumb: "https://i.ytimg.com/vi/" + m[1] + "/hqdefault.jpg", vertical: /shorts\//.test(url) };
+    var d = String(url || "").match(/drive\.google\.com\/file\/d\/([\w-]+)/);
+    if (d) return { kind: "drive", embed: "https://drive.google.com/file/d/" + d[1] + "/preview" };
+    return url ? { kind: "link", href: url } : null;
+  }
+  function videosHTML() {
+    var vs = (SCHOOL.videos || []).map(function (v) { return { v: v, s: videoSrc(v.url) }; }).filter(function (x) { return x.s; });
+    if (!vs.length) return "";
+    return '<section class="vids"><div class="wrap"><h2 class="h2">영상으로 만나는 예당고</h2><div class="vid-grid">' + vs.map(function (x, i) {
+      var s = x.s, body;
+      if (s.kind === "yt") body = '<button type="button" class="vid-play' + (s.vertical ? " vert" : "") + '" data-src="' + esc(s.embed) + '" aria-label="' + esc(x.v.t) + ' 재생"><img src="' + s.thumb + '" alt="" loading="lazy"><span class="vid-btn" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></span></button>';
+      else if (s.kind === "drive") body = '<div class="vid-frame"><iframe src="' + esc(s.embed) + '" title="' + esc(x.v.t) + '" loading="lazy" allow="autoplay; fullscreen" allowfullscreen></iframe></div>';
+      else body = '<a class="vid-play vid-out" href="' + esc(s.href) + '" target="_blank" rel="noopener"><span class="vid-btn" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></span><em>영상 보러 가기</em></a>';
+      return '<figure class="vid">' + body + '<figcaption><b>' + esc(x.v.t) + "</b>" + (x.v.d ? "<span>" + esc(x.v.d) + "</span>" : "") + "</figcaption></figure>";
+    }).join("") + "</div></div></section>";
+  }
+  function bindVideos() {
+    $$(".vid-play[data-src]").forEach(function (b) {
+      b.onclick = function () {
+        var f = document.createElement("div"); f.className = "vid-frame" + (b.classList.contains("vert") ? " vert" : "");
+        f.innerHTML = '<iframe src="' + b.dataset.src + '" title="' + b.getAttribute("aria-label").replace(" 재생", "") + '" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>';
+        b.replaceWith(f);
+      };
+    });
   }
   function quickMenu() {
     var last = store("yd_game_last"), f = last && FIELD[last.field];

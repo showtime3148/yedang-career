@@ -130,6 +130,17 @@
     }).join("") + '</ul><aside class="aside-card"><h3>진로와 상관없이 모두 함께해요</h3>' + ul(SCHOOL.commonPrograms) +
       '<p class="src" style="margin-top:18px">자료: 2026학년도 예당고 교육계획서와 2026년 11월 학교 현황. 추진 중인 사업은 일정이 바뀔 수 있습니다.</p></aside></div>';
   }
+  function resultsHTML() {
+    return '<div class="results">' + SCHOOL.results.map(function (r) {
+      return '<article class="res-year"><h3>' + r.year + '학년도</h3>' +
+        '<p class="res-k">서울 · 수도권</p><p class="res-v">' + r.metro.map(esc).join(", ") + ' 등</p>' +
+        '<p class="res-k">교육대 · 사관학교</p><p class="res-v">' + r.special.map(esc).join(", ") + '</p>' +
+        '<p class="res-k">지방 국공립 · 사립</p><p class="res-v">' + esc(r.local) + '</p></article>';
+    }).join("") + '</div><p class="src">출처: 예당고등학교 학년도별 대학 진학 결과. 대학 이름은 합격 기준이며 수도권 대학은 주요 대학만 적었습니다.</p>';
+  }
+  function resultsSection() {
+    return '<section class="block"><div class="wrap"><h2 class="h2">선배들은 이 대학에 갔어요</h2><p class="sub">최근 3년(2024~2026학년도) 예당고 졸업생의 대학 진학 결과입니다.</p>' + resultsHTML() + "</div></section>";
+  }
   function changesHTML() {
     return '<div class="changes">' + ADM.changes.map(function (c) { return "<div><b>" + esc(c.t) + "</b><p>" + esc(c.d) + "</p></div>"; }).join("") + "</div>";
   }
@@ -153,7 +164,7 @@
       '<div class="hero-facts"><span><b>' + FIELDS.length + "개</b>진로 분야</span><span><b>" + jobsCount + "개</b>대표 직업 정보</span><span><b>2028</b>대입 기준</span></div>" +
       "</div></section>" +
       '<section class="block" id="fields"><div class="wrap"><h2 class="h2">분야를 골라 둘러보기</h2><p class="sub">아직 장래희망이 없어도 괜찮아요. 끌리는 분야를 눌러 보세요.</p>' + groupsHTML() + "</div></section>" +
-      ctaBand() +
+      ctaBand() + resultsSection() +
       '<section class="block"><div class="wrap"><h2 class="h2">예당고는 이런 학교예요</h2><p class="sub">보성 득량에 있는 기숙형 일반고. AI와 IB로 수업 방식을 바꾸고 있습니다.</p>' + schoolHTML() + "</div></section>" +
       '<section class="block"><div class="wrap"><h2 class="h2">2028 대입, 이것만은 알아 두세요</h2><p class="sub">지금 중3이 치르는 대입에서 달라지는 점입니다.</p>' + changesHTML() + "</div></section>" +
       savedHTML();
@@ -209,7 +220,7 @@
   function viewSchool() {
     setNav("school");
     main.innerHTML = '<div class="wrap page-head"><h1>예당고는 이런 학교예요</h1><p>' + esc(SCHOOL.location) + ". 기숙사가 있는 농어촌 자율학교로, AI 중점학교와 IB를 함께 준비하고 있습니다.</p></div>" +
-      '<section class="block" style="padding-top:8px"><div class="wrap">' + schoolHTML() + "</div></section>" +
+      '<section class="block" style="padding-top:8px"><div class="wrap">' + schoolHTML() + "</div></section>" + resultsSection() +
       '<section class="block"><div class="wrap"><h2 class="h2">2028 대입, 이것만은 알아 두세요</h2><p class="sub">지금 중3이 치르는 대입에서 달라지는 점입니다.</p>' + changesHTML() + "</div></section>" + ctaBand();
   }
 

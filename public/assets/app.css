@@ -109,6 +109,15 @@ section.block + section.block { border-top: 1px solid var(--line); }
 .aside-card ul { margin: 0; padding-left: 18px; color: var(--ink); }
 .aside-card li { margin: 6px 0; font-size: 15px; }
 
+.results { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-top: 3px solid var(--pine); }
+.res-year { padding: 22px 24px 24px 0; }
+.res-year + .res-year { padding-left: 24px; border-left: 1px solid var(--line); }
+.res-year h3 { margin: 0 0 14px; font-size: 26px; letter-spacing: -.03em; color: var(--pine); }
+.res-year:first-child h3::after { content: "최신"; margin-left: 10px; font-size: 12.5px; font-weight: 800; background: var(--sprout); color: var(--pine); padding: 3px 9px; border-radius: 999px; vertical-align: middle; letter-spacing: 0; }
+.res-k { margin: 12px 0 2px; font-size: 13.5px; font-weight: 700; color: var(--tea); }
+.res-v { margin: 0; font-size: 15px; color: var(--ink); }
+@media (max-width: 760px) { .results { grid-template-columns: 1fr; } .res-year, .res-year + .res-year { padding: 18px 0; border-left: 0; border-top: 1px solid var(--line); } }
+
 /* 대입 변화 */
 .changes { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 0 40px; counter-reset: none; }
 .changes div { padding: 20px 0; border-top: 2px solid var(--pine); }

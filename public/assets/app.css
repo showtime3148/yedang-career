@@ -140,7 +140,7 @@ section.block + section.block { border-top: 1px solid var(--line); }
 .g-sems li.g-done { background: var(--tea-2); color: var(--pine); border-color: transparent; }
 .g-sems li.now { background: var(--pine); color: var(--sprout); border-color: var(--pine); }
 .g-meters { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.g-meter, .g-stat { display: grid; grid-template-columns: 44px 1fr auto; gap: 8px; align-items: center; font-size: 13px; }
+.g-meter, .g-stat { display: grid; grid-template-columns: 58px 1fr auto; gap: 8px; align-items: center; font-size: 13px; }
 .g-meter span, .g-stat span { color: var(--muted); font-weight: 700; }
 .g-meter i, .g-stat i { height: 10px; border-radius: 99px; background: var(--paper); border: 1px solid var(--line); position: relative; overflow: hidden; }
 .g-meter i::after, .g-stat i::after { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--v); background: var(--c, var(--tea)); border-radius: 99px; transition: width .4s; }
@@ -274,6 +274,61 @@ section.block + section.block { border-top: 1px solid var(--line); }
   .g-cert { padding: 28px 18px; }
 }
 @media (prefers-reduced-motion: reduce) { .ch { transition: none; } }
+
+/* 게임: 시간표·성적표 */
+.g-sems.g-12 { grid-template-columns: repeat(12, 1fr); }
+.g-sems.g-12 li { font-size: 11px; }
+.g-meters { grid-template-columns: 1fr 1fr 1fr; }
+.g-meter i.m-sr::after { background: #D94F6B; }
+.g-last { grid-template-columns: auto 1fr; }
+.g-last b { text-align: left; color: var(--pine); }
+.pl-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+.pl-box { background: var(--white); border: 1px solid var(--line); border-radius: var(--r-l); padding: 18px; }
+.pl-box h3 { margin: 0 0 10px; font-size: 17px; color: var(--pine); }
+.pl-box h3 small { font-size: 13px; color: var(--muted); font-weight: 600; margin-left: 6px; }
+.pl-row { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.pl-e { font-size: 22px; text-align: center; }
+.pl-name b { display: block; font-size: 15.5px; }
+.pl-skill { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); font-weight: 700; }
+.pl-skill i { width: 90px; height: 7px; border-radius: 99px; background: var(--paper); border: 1px solid var(--line); position: relative; overflow: hidden; flex: none; }
+.pl-skill i::after { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--v); background: var(--tea); }
+.pl-note { font-weight: 500; }
+.pl-step { display: flex; align-items: center; gap: 6px; }
+.pl-step button { width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid var(--line-2); background: #fff; font-size: 20px; font-weight: 700; color: var(--pine); line-height: 1; }
+.pl-step button:hover:not([disabled]) { border-color: var(--tea); background: var(--tea-2); }
+.pl-step button[disabled] { opacity: .35; cursor: not-allowed; }
+.pl-step output { min-width: 52px; text-align: center; font-weight: 800; color: var(--pine); }
+.pl-rest { border-bottom: 0; }
+.pl-hint { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+.g-cards-sm { grid-template-columns: 1fr 1fr; gap: 8px; }
+.g-cards-sm .g-card { padding: 12px; }
+.g-cards-sm .g-e { font-size: 22px; }
+.g-cards-sm .g-card b { font-size: 14.5px; }
+.g-report { width: min(560px, 100%); }
+.rp { width: 100%; border-collapse: collapse; margin: 6px 0 12px; font-size: 14.5px; }
+.rp th { text-align: left; font-size: 12.5px; color: var(--muted); font-weight: 700; padding: 6px 4px; border-bottom: 2px solid var(--pine); }
+.rp td { padding: 9px 4px; border-bottom: 1px solid var(--line); }
+.rp td b { font-size: 17px; color: var(--pine); }
+.rp em { font-style: normal; font-size: 12px; font-weight: 700; color: var(--muted); }
+.rp em.up { color: #2E7D32; } .rp em.dn { color: var(--danger); }
+.gr { display: inline-block; min-width: 54px; text-align: center; font-weight: 800; font-size: 13px; border-radius: 999px; padding: 2px 8px; }
+.gr1 { background: var(--sprout); color: var(--pine); } .gr2 { background: #DCEBDD; color: var(--pine); } .gr3 { background: #EEF1EE; color: #4D5A52; } .gr4 { background: var(--warn-bg); color: var(--warn); } .gr5 { background: #FBE7E6; color: var(--danger); }
+.rp-avg { margin: 0 0 6px; font-size: 15px; }
+.rp-avg b { font-size: 20px; color: var(--pine); }
+.rp-c { margin: 0; background: var(--paper); border-radius: 10px; padding: 10px 12px; font-size: 14.5px; }
+.g-end-chart { background: var(--white); border: 1px solid var(--line); border-radius: var(--r-l); padding: 18px 20px 8px; margin-top: 22px; }
+.g-end-chart h3 { margin: 0 0 6px; font-size: 17px; color: var(--pine); }
+.g-chart { width: 100%; height: auto; display: block; }
+@media (max-width: 760px) {
+  .g-sems.g-12 { grid-template-columns: repeat(6, 1fr); }
+  .g-sems.g-12 li { font-size: 10px; height: 24px; }
+  .g-meters { grid-template-columns: 1fr; }
+  .pl-grid { grid-template-columns: 1fr; }
+  .pl-skill i { width: 60px; }
+  .pl-step button { width: 34px; height: 34px; }
+  .pl-step output { min-width: 44px; font-size: 14px; }
+  .rp { font-size: 13px; } .rp td b { font-size: 15px; } .gr { min-width: 46px; font-size: 12px; }
+}
 
 /* 시설 둘러보기 */
 .teaser-head { display: flex; justify-content: space-between; align-items: end; gap: 16px; flex-wrap: wrap; }

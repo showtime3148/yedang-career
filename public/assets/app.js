@@ -227,7 +227,7 @@
   }
   function gameBand() {
     var last = store("yd_game_last"), f = last && FIELD[last.field];
-    return '<section class="game-band"><div class="wrap"><div class="gb-steps" aria-hidden="true">' + ["1-1", "1-2", "2-1", "2-2", "3-1", "3-2"].map(function (x, i) { return '<span style="--i:' + i + '">' + x + "</span>"; }).join("") + '</div><div class="gb-txt"><h2>게임으로 미리 살아 보는 예당고 3년</h2><p>6학기 동안 동아리, 탐구, 봉사, 공부, 휴식 가운데 무엇을 할지 골라 보세요. 졸업할 때 나에게 맞는 진로가 나타나요. 끝까지 졸업하면 완주 기념품과 문화상품권 추첨이 기다려요!' + (f ? " 지난번 결과는 " + f.emoji + " " + esc(f.name) + "였어요." : "") + '</p><a class="btn btn-sprout" href="#/game">' + (f ? "다시 도전하기" : "게임 시작") + "</a></div></div></section>";
+    return '<section class="game-band"><div class="wrap"><div class="gb-steps" aria-hidden="true">' + ["1-1", "1-2", "2-1", "2-2", "3-1", "3-2"].map(function (x, i) { return '<span style="--i:' + i + '">' + x + "</span>"; }).join("") + '</div><div class="gb-txt"><h2>게임으로 미리 살아 보는 예당고 3년</h2><p>시험 기간마다 공부 시간표를 짜고, 중간·기말고사 12번을 치르며 성적표를 받아 보세요. 동아리와 휴식도 챙겨야 해요. 졸업할 때 내 진로가 나타나고, 끝까지 졸업하면 완주 기념품과 문화상품권 추첨이 기다려요!' + (f ? " 지난번 결과는 " + f.emoji + " " + esc(f.name) + "였어요." : "") + '</p><a class="btn btn-sprout" href="#/game">' + (f ? "다시 도전하기" : "게임 시작") + "</a></div></div></section>";
   }
 
   /* ───── 시설 둘러보기 ───── */

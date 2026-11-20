@@ -1,6 +1,9 @@
-/* 예당고 3년 미리 살기 — 6학기 동안 활동을 골라 진로를 찾아가는 게임
- * 능력치: 만들기(R) 탐구(I) 표현(A) 소통(S) 도전(E) 꼼꼼(C) + 성적 + 체력
- * 졸업할 때 능력치 모양과 가장 닮은 진로 분야(data-fields.js)를 추천합니다. */
+/* 예당고 3년 미리 살기 — 육성 시뮬레이션
+ * 3년 = 12기간(학기마다 중간고사 전 · 기말고사 전). 기간마다 방과후·자습 20시간(2시간 × 10칸)을
+ * 과목 공부 · 동아리 활동 · 휴식에 나눠 쓰고, 기간 끝에 시험을 봅니다.
+ * 시험 점수 = 과목 실력(공부 시간 × 적성 × 컨디션이 쌓인 값) + 컨디션 + 운.
+ * 54명 기준 석차와 5등급제(1등급 10% · 2등급 34% · 3등급 66% · 4등급 90%까지)로 성적표를 줍니다.
+ * 활동으로 쌓인 진로 능력치(만들기 탐구 표현 소통 도전 꼼꼼)와 가장 닮은 진로 분야를 졸업 때 추천합니다. */
 (function () {
   "use strict";
   var STATS = [
@@ -12,6 +15,27 @@
     { k: "C", name: "꼼꼼", c: "#6B55D9" }
   ];
   var SEM = ["1학년 1학기", "1학년 2학기", "2학년 1학기", "2학년 2학기", "3학년 1학기", "3학년 2학기"];
+  var PERIODS = 12, SLOTS = 10, CLASS = 54;
+  function periodLabel(p) { return SEM[Math.floor(p / 2)] + " " + (p % 2 ? "기말고사" : "중간고사"); }
+
+  // 과목 (학년마다 이름이 바뀜). where: 공부하러 가는 곳
+  var SUBJ = [
+    { k: "ko", e: "📖", where: "library", names: ["공통국어", "문학", "독서와 작문"] },
+    { k: "ma", e: "📐", where: "dorm", names: ["공통수학", "대수 · 미적분Ⅰ", "확률과 통계"] },
+    { k: "en", e: "🌏", where: "library", names: ["공통영어", "영어Ⅰ", "영어Ⅱ"] },
+    { k: "ta", e: "🔬", where: "lab", names: ["통합사회 · 통합과학", "선택 과목", "진로 선택 과목"] }
+  ];
+  var TRACKS = [
+    { n: "자연·공학", d: "물리학, 화학, 미적분Ⅰ, 정보", ta: ["물리학 · 화학", "역학과 에너지 · 화학 반응"], fx: { I: 1, R: 1 }, talent: { ma: 0.05, ta: 0.05 } },
+    { n: "인문·사회", d: "사회와 문화, 세계사, 경제, 정치", ta: ["사회와 문화 · 세계사", "경제 · 정치"], fx: { S: 1, E: 1 }, talent: { ko: 0.05, ta: 0.05 } },
+    { n: "생명·보건", d: "생명과학, 화학, 확률과 통계, 보건", ta: ["생명과학 · 화학", "세포와 물질대사 · 생물의 유전"], fx: { I: 1, S: 1 }, talent: { ta: 0.08 } },
+    { n: "예술·디자인", d: "미술, 음악, 매체 의사소통, 정보", ta: ["미술 창작 · 음악", "미술과 매체 · 음악과 미디어"], fx: { A: 2 }, talent: { ko: 0.05, en: 0.03 } }
+  ];
+  function subjName(s) {
+    var g = Math.floor(st.p / 4);
+    if (s.k === "ta" && g >= 1 && st.track) { var t = TRACKS.find(function (x) { return x.n === st.track; }); if (t) return t.ta[g - 1]; }
+    return s.names[g];
+  }
 
   // 분야별 능력치 모양 (R I A S E C)
   var PROFILE = {
@@ -23,80 +47,59 @@
     design: [1, 0, 3, 0, 1, 1], music: [1, 0, 3, 1, 1, 0], sports: [3, 0, 0, 1, 2, 0]
   };
 
-  // 활동 카드: cost(시간 칸) / fx 능력치 / g 성적 / en 체력 / from 학기(0~5)부터 / tag 생기부 문장
+  // 활동 카드 (한 장에 2칸 = 4시간). fx 진로 능력치 / en 체력 / sub 과목 실력 보너스 / from 기간부터 / tag 생기부 문장
   var CARDS = [
-    { id: "lib", e: "📚", n: "도서관 혜윰에서 책 읽기", p: "도서관 혜윰", cost: 1, fx: { I: 1, A: 1 }, g: 0, en: 0, tag: "도서관에서 관심 분야 책을 꾸준히 읽음" },
-    { id: "dadok", e: "🗣️", n: "다독다독 독서토론", p: "독서 동아리", cost: 1, fx: { A: 1, S: 1, I: 1 }, g: 0, en: -1, tag: "독서토론에서 근거를 들어 자기 생각을 말함" },
-    { id: "pi", e: "π", n: "파이(π) 수학 탐구", p: "수학 동아리", cost: 1, fx: { I: 2, C: 1 }, g: 1, en: -1, tag: "수학 개념을 확장해 탐구 보고서를 씀" },
-    { id: "lab", e: "🧪", n: "창의과학연구부 실험", p: "과학실", cost: 1, fx: { I: 2, R: 1 }, g: 0, en: -1, tag: "가설을 세우고 실험으로 검증함" },
-    { id: "dal", e: "🔧", n: "달그락 메이커 활동", p: "무한상상실", cost: 1, fx: { R: 2, A: 1 }, g: 0, en: -1, tag: "센서로 생활 속 불편을 해결하는 장치를 만듦" },
-    { id: "robit", e: "🤖", n: "ROBIT 로봇 만들기", p: "AI실", cost: 1, fx: { R: 2, I: 1 }, g: 0, en: -1, tag: "로봇을 설계하고 코딩으로 움직이게 함" },
-    { id: "aikkum", e: "✨", n: "AI 꿈키움 프로젝트", p: "2030 AI 아고라", cost: 1, fx: { I: 1, R: 1, E: 1 }, g: 0, en: -1, tag: "AI로 지역 문제를 해결하는 프로젝트를 이끎" },
-    { id: "vibe", e: "💻", n: "바이브코딩으로 앱 만들기", p: "AI실", cost: 1, fx: { R: 1, A: 1, E: 1 }, g: 0, en: -1, tag: "AI와 함께 친구들이 쓰는 앱을 직접 만듦" },
-    { id: "night", e: "🩺", n: "나이팅게일 응급처치 캠페인", p: "보건 동아리", cost: 1, fx: { S: 2, R: 1 }, g: 0, en: -1, tag: "응급처치 캠페인을 기획해 친구들에게 알림" },
-    { id: "frame", e: "🎬", n: "프레임잇 영상 제작", p: "미디어 동아리", cost: 1, fx: { A: 2, E: 1 }, g: 0, en: -1, tag: "학교 행사를 취재해 영상으로 만듦" },
-    { id: "aimusic", e: "🎵", n: "AI 작곡 (인공지능미디어랩)", p: "음악실", cost: 1, fx: { A: 2, R: 1 }, g: 0, en: -1, tag: "AI 음악 도구로 곡을 만들고 편곡함" },
-    { id: "draw", e: "🎨", n: "드로잉 동아리", p: "미술실", cost: 1, fx: { A: 2, C: 1 }, g: 0, en: 0, tag: "주제를 정해 연작 그림을 완성함" },
-    { id: "vivid", e: "💃", n: "비비드 댄스 공연", p: "인명축제 무대", cost: 1, fx: { A: 1, E: 1, S: 1 }, g: -1, en: -1, tag: "축제 무대 공연을 친구들과 준비함" },
-    { id: "futsal", e: "⚽", n: "공차 풋살", p: "풋살장", cost: 1, fx: { R: 2, S: 1 }, g: 0, en: 1, tag: "스포츠클럽에서 팀워크를 키움" },
-    { id: "mentor", e: "🤝", n: "교학상장 또래 멘토링", p: "교실", cost: 1, fx: { S: 2, C: 1 }, g: 1, en: -1, tag: "친구에게 어려운 개념을 쉽게 설명해 줌" },
-    { id: "mind", e: "💚", n: "마음챙김 캠페인", p: "상담실", cost: 1, fx: { S: 2 }, g: 0, en: 0, tag: "친구들의 마음건강 캠페인을 기획함" },
-    { id: "council", e: "🏛️", n: "학생자치회 활동", p: "학생회실", cost: 1, fx: { E: 2, C: 1 }, g: 0, en: -1, tag: "학칙 개정안을 내고 의견을 모음" },
-    { id: "debate", e: "⚖️", n: "시사 토론대회", p: "2030 AI 아고라", cost: 1, fx: { E: 1, I: 1, S: 1 }, g: 0, en: -1, tag: "사회 쟁점을 근거로 토론함" },
-    { id: "write", e: "✍️", n: "문예 백일장", p: "국어과 대회", cost: 1, fx: { A: 2 }, g: 0, en: 0, tag: "백일장에서 자신의 이야기를 글로 씀" },
-    { id: "star", e: "🔭", n: "'별 헤는 밤' 천체관측", p: "운동장", cost: 1, fx: { I: 2 }, g: 0, en: -1, tag: "천체를 관측하고 기록을 분석함" },
-    { id: "english", e: "🌏", n: "어학실 영어 발표", p: "어학실 · HWHH", cost: 1, fx: { S: 1, A: 1, E: 1 }, g: 1, en: 0, tag: "진로 주제를 영어로 발표함" },
-    { id: "league", e: "📋", n: "리그전 심판·기록 맡기", p: "진은관", cost: 1, fx: { C: 2, R: 1 }, g: 0, en: 0, tag: "경기 기록을 정리하고 분석함" },
-    { id: "dorm", e: "🏠", n: "기숙사 생활부장", p: "심경학사", cost: 1, fx: { C: 2, S: 1 }, g: 0, en: -1, tag: "기숙사 생활 규칙을 함께 정함" },
-    { id: "festival", e: "🎪", n: "인명축제 부스 운영", p: "축제", cost: 1, fx: { E: 2, S: 1 }, g: -1, en: -1, tag: "축제 부스의 수익 구조를 기획함" },
-    { id: "donghaeng", e: "🌱", n: "'따뜻한 동행' 봉사", p: "지역 마을", cost: 1, fx: { S: 2, E: 1 }, g: 0, en: -1, tag: "지역 어르신 돌봄 봉사를 기획함" },
-    { id: "eco", e: "🍃", n: "생태지도 만들기", p: "득량만 · 차밭", cost: 1, fx: { I: 1, R: 1, S: 1 }, g: 0, en: 0, tag: "우리 마을 생태지도를 만듦" },
-    { id: "jayul", e: "🌙", n: "자율학습실 야간 자습", p: "자율학습실", cost: 1, fx: { C: 1 }, g: 3, en: -2, tag: "" },
-    { id: "jeongdok", e: "📖", n: "정독실 집중 공부", p: "정독실", cost: 1, fx: { C: 1 }, g: 2, en: -1, tag: "" },
-    { id: "cafe", e: "🎧", n: "학습카페 인강 듣기", p: "온라인 학습카페", cost: 1, fx: {}, g: 2, en: 0, tag: "" },
-    { id: "rest", e: "👣", n: "맨발 트랙 걷기 · 쉬기", p: "맨발걷기 돌길", cost: 1, fx: {}, g: 0, en: 3, tag: "" },
-    { id: "golf", e: "⛳", n: "스크린 골프로 기분 전환", p: "스크린 골프장", cost: 1, fx: { R: 1 }, g: 0, en: 2, tag: "" },
-    { id: "onetamgu", e: "🔬", n: "1학생 1탐구", p: "지능형 과학실", cost: 2, fx: { I: 3, C: 1 }, g: 1, en: -2, from: 1, tag: "스스로 정한 주제로 1년간 탐구를 완성함" },
-    { id: "fab", e: "🔌", n: "미니 반도체 팹 실습", p: "미니 팹", cost: 1, fx: { R: 2, I: 1 }, g: 0, en: -1, from: 2, tag: "반도체 공정을 실습하고 공정 변수를 분석함" },
-    { id: "rne", e: "📑", n: "R&E 과제연구", p: "연구팀", cost: 2, fx: { I: 3, E: 1, C: 1 }, g: 0, en: -2, from: 2, tag: "연구팀을 꾸려 논문형 보고서를 씀" },
-    { id: "ee", e: "📝", n: "IB 소논문(EE) 맛보기", p: "IB 수업", cost: 2, fx: { I: 2, A: 2 }, g: 1, en: -2, from: 1, tag: "스스로 질문을 세워 소논문을 씀" },
-    { id: "indie", e: "🎮", n: "인디게임 만들기", p: "AI실", cost: 2, fx: { R: 2, A: 2, E: 1 }, g: -1, en: -2, from: 1, tag: "팀을 꾸려 인디게임을 만들어 출시함" },
-    { id: "hanlim", e: "🎓", n: "한림원 석사와의 만남", p: "진로특강", cost: 1, fx: { I: 1, E: 1 }, g: 0, en: 0, from: 2, tag: "대학원 연구자와 연구 진로를 이야기함" },
-    { id: "lead", e: "🧭", n: "후배 멘토 · 동아리 부장", p: "동아리", cost: 1, fx: { S: 1, E: 2 }, g: 0, en: -1, from: 4, tag: "동아리 부장으로 후배들을 이끎" },
-    { id: "portfolio", e: "🗂️", n: "3년 활동 포트폴리오 정리", p: "진로실", cost: 1, fx: { C: 2, A: 1 }, g: 1, en: 0, from: 4, tag: "3년간의 활동을 하나의 이야기로 정리함" }
+    { id: "lib", e: "📚", n: "도서관 혜윰에서 책 읽기", p: "도서관 혜윰", fx: { I: 1, A: 1 }, en: 0, sub: { ko: 2 }, tag: "도서관에서 관심 분야 책을 꾸준히 읽음" },
+    { id: "dadok", e: "🗣️", n: "다독다독 독서토론", p: "독서 동아리", fx: { A: 1, S: 1, I: 1 }, en: -1, sub: { ko: 2 }, tag: "독서토론에서 근거를 들어 자기 생각을 말함" },
+    { id: "pi", e: "π", n: "파이(π) 수학 탐구", p: "수학 동아리", fx: { I: 2, C: 1 }, en: -1, sub: { ma: 3 }, tag: "수학 개념을 확장해 탐구 보고서를 씀" },
+    { id: "lab", e: "🧪", n: "창의과학연구부 실험", p: "과학실", fx: { I: 2, R: 1 }, en: -1, sub: { ta: 2 }, tag: "가설을 세우고 실험으로 검증함" },
+    { id: "dal", e: "🔧", n: "달그락 메이커 활동", p: "무한상상실", fx: { R: 2, A: 1 }, en: -1, tag: "센서로 생활 속 불편을 해결하는 장치를 만듦" },
+    { id: "robit", e: "🤖", n: "ROBIT 로봇 만들기", p: "AI실", fx: { R: 2, I: 1 }, en: -1, tag: "로봇을 설계하고 코딩으로 움직이게 함" },
+    { id: "aikkum", e: "✨", n: "AI 꿈키움 프로젝트", p: "2030 AI 아고라", fx: { I: 1, R: 1, E: 1 }, en: -1, tag: "AI로 지역 문제를 해결하는 프로젝트를 이끎" },
+    { id: "vibe", e: "💻", n: "바이브코딩으로 앱 만들기", p: "AI실", fx: { R: 1, A: 1, E: 1 }, en: -1, tag: "AI와 함께 친구들이 쓰는 앱을 직접 만듦" },
+    { id: "night", e: "🩺", n: "나이팅게일 응급처치 캠페인", p: "보건 동아리", fx: { S: 2, R: 1 }, en: -1, tag: "응급처치 캠페인을 기획해 친구들에게 알림" },
+    { id: "frame", e: "🎬", n: "프레임잇 영상 제작", p: "미디어 동아리", fx: { A: 2, E: 1 }, en: -1, tag: "학교 행사를 취재해 영상으로 만듦" },
+    { id: "aimusic", e: "🎵", n: "AI 작곡 (인공지능미디어랩)", p: "음악실", fx: { A: 2, R: 1 }, en: 0, tag: "AI 음악 도구로 곡을 만들고 편곡함" },
+    { id: "draw", e: "🎨", n: "드로잉 동아리", p: "미술실", fx: { A: 2, C: 1 }, en: 0, tag: "주제를 정해 연작 그림을 완성함" },
+    { id: "vivid", e: "💃", n: "비비드 댄스 공연", p: "인명축제 무대", fx: { A: 1, E: 1, S: 1 }, en: -1, tag: "축제 무대 공연을 친구들과 준비함" },
+    { id: "futsal", e: "⚽", n: "공차 풋살", p: "풋살장", fx: { R: 2, S: 1 }, en: 1, tag: "스포츠클럽에서 팀워크를 키움" },
+    { id: "mentor", e: "🤝", n: "교학상장 또래 멘토링", p: "본관 교실", fx: { S: 2, C: 1 }, en: -1, sub: { ma: 1, ko: 1 }, tag: "친구에게 어려운 개념을 쉽게 설명해 줌" },
+    { id: "mind", e: "💚", n: "마음챙김 캠페인", p: "상담실", fx: { S: 2 }, en: 1, tag: "친구들의 마음건강 캠페인을 기획함" },
+    { id: "council", e: "🏛️", n: "학생자치회 활동", p: "학생회실", fx: { E: 2, C: 1 }, en: -1, tag: "학칙 개정안을 내고 의견을 모음" },
+    { id: "debate", e: "⚖️", n: "시사 토론대회", p: "2030 AI 아고라", fx: { E: 1, I: 1, S: 1 }, en: -1, sub: { ta: 1 }, tag: "사회 쟁점을 근거로 토론함" },
+    { id: "write", e: "✍️", n: "문예 백일장", p: "도서관", fx: { A: 2 }, en: 0, sub: { ko: 2 }, tag: "백일장에서 자신의 이야기를 글로 씀" },
+    { id: "star", e: "🔭", n: "'별 헤는 밤' 천체관측", p: "운동장", fx: { I: 2 }, en: -1, sub: { ta: 1 }, tag: "천체를 관측하고 기록을 분석함" },
+    { id: "english", e: "🎤", n: "HWHH 영어 발표", p: "어학실", fx: { S: 1, A: 1, E: 1 }, en: 0, sub: { en: 3 }, tag: "진로 주제를 영어로 발표함" },
+    { id: "league", e: "📋", n: "리그전 심판·기록 맡기", p: "진은관", fx: { C: 2, R: 1 }, en: 0, tag: "경기 기록을 정리하고 분석함" },
+    { id: "dorm", e: "🏠", n: "기숙사 생활부장", p: "심경학사", fx: { C: 2, S: 1 }, en: -1, tag: "기숙사 생활 규칙을 함께 정함" },
+    { id: "festival", e: "🎪", n: "인명축제 부스 운영", p: "축제", fx: { E: 2, S: 1 }, en: -1, tag: "축제 부스의 수익 구조를 기획함" },
+    { id: "donghaeng", e: "🌱", n: "'따뜻한 동행' 봉사", p: "지역 마을", fx: { S: 2, E: 1 }, en: -1, tag: "지역 어르신 돌봄 봉사를 기획함" },
+    { id: "eco", e: "🍃", n: "생태지도 만들기", p: "득량만 · 차밭", fx: { I: 1, R: 1, S: 1 }, en: 0, sub: { ta: 1 }, tag: "우리 마을 생태지도를 만듦" },
+    { id: "onetamgu", e: "🔬", n: "1학생 1탐구", p: "지능형 과학실", fx: { I: 3, C: 1 }, en: -1, sub: { ta: 2 }, from: 2, tag: "스스로 정한 주제로 1년간 탐구를 완성함" },
+    { id: "fab", e: "🔌", n: "미니 반도체 팹 실습", p: "미니 팹", fx: { R: 2, I: 1 }, en: -1, from: 4, tag: "반도체 공정을 실습하고 공정 변수를 분석함" },
+    { id: "rne", e: "📑", n: "R&E 과제연구", p: "연구팀", fx: { I: 3, E: 1, C: 1 }, en: -2, sub: { ta: 2 }, from: 4, tag: "연구팀을 꾸려 논문형 보고서를 씀" },
+    { id: "ee", e: "📝", n: "IB 소논문(EE) 맛보기", p: "IB 수업", fx: { I: 2, A: 2 }, en: -1, sub: { ko: 1, ta: 1 }, from: 2, tag: "스스로 질문을 세워 소논문을 씀" },
+    { id: "indie", e: "🎮", n: "인디게임 만들기", p: "AI실", fx: { R: 2, A: 2, E: 1 }, en: -2, from: 2, tag: "팀을 꾸려 인디게임을 만들어 출시함" },
+    { id: "hanlim", e: "🎓", n: "한림원 석사와의 만남", p: "진로특강", fx: { I: 1, E: 1 }, en: 0, from: 4, tag: "대학원 연구자와 연구 진로를 이야기함" },
+    { id: "lead", e: "🧭", n: "후배 멘토 · 동아리 부장", p: "동아리", fx: { S: 1, E: 2 }, en: -1, from: 8, tag: "동아리 부장으로 후배들을 이끎" },
+    { id: "portfolio", e: "🗂️", n: "3년 활동 포트폴리오 정리", p: "진로실", fx: { C: 2, A: 1 }, en: 0, from: 8, tag: "3년간의 활동을 하나의 이야기로 정리함" }
   ];
+  function card(id) { return CARDS.find(function (c) { return c.id === id; }); }
 
-  // 학기 사이 사건 (선택지)
+  // 기간 사이 사건
   var EVENTS = [
-    { t: "중간고사 일주일 전, 친구가 축제 준비를 같이 하자고 한다.", a: [{ n: "시험공부에 집중한다", fx: { C: 1 }, g: 3, en: -1 }, { n: "축제 준비를 돕는다", fx: { E: 1, S: 1 }, g: -1, en: 0 }] },
-    { t: "진로특강에서 만난 연구원이 연구실 견학을 제안했다.", a: [{ n: "견학을 간다", fx: { I: 2 }, g: 0, en: -1 }, { n: "다음 기회로 미룬다", fx: {}, g: 1, en: 1 }] },
-    { t: "금요일 밤 생성형 AI 해커톤 캠프 공지가 올라왔다.", a: [{ n: "팀을 꾸려 참가한다", fx: { R: 1, I: 1, E: 1 }, g: 0, en: -2 }, { n: "푹 쉰다", fx: {}, g: 0, en: 2 }] },
-    { t: "기숙사 룸메이트와 생활 습관 때문에 사이가 어색해졌다.", a: [{ n: "솔직하게 대화한다", fx: { S: 2 }, g: 0, en: -1 }, { n: "사감 선생님과 규칙을 정한다", fx: { C: 1, S: 1 }, g: 0, en: 0 }] },
-    { t: "IB 수업 시간, 선생님이 '우리는 그것을 어떻게 아는가?'라고 물었다.", a: [{ n: "근거를 찾아 발표한다", fx: { I: 1, E: 1 }, g: 1, en: -1 }, { n: "다른 관점의 글을 써 본다", fx: { A: 1, I: 1 }, g: 1, en: 0 }] },
-    { t: "선배와의 만남. 원하는 대학에 간 선배가 3년 공부법을 알려 줬다.", a: [{ n: "공부 계획표를 새로 짠다", fx: { C: 1 }, g: 2, en: 0 }, { n: "선배에게 활동 조언을 묻는다", fx: { E: 1, S: 1 }, g: 0, en: 0 }] },
-    { t: "요즘 피곤해서 수업 시간에 자꾸 졸린다.", a: [{ n: "맨발 트랙을 걸으며 쉰다", fx: {}, g: 0, en: 3 }, { n: "참고 버틴다", fx: { C: 1 }, g: -1, en: -1 }] },
-    { t: "서울대 나눔교실 대학생 멘토가 겨울방학 캠프를 연다.", a: [{ n: "캠프에 참가한다", fx: { I: 1, S: 1 }, g: 2, en: -1 }, { n: "집에서 쉰다", fx: {}, g: 0, en: 2 }] },
-    { t: "학교 홍보 영상을 같이 찍자는 제안을 받았다.", a: [{ n: "출연하고 편집도 돕는다", fx: { A: 1, E: 1 }, g: 0, en: -1 }, { n: "대본만 써 준다", fx: { A: 1, C: 1 }, g: 0, en: 0 }] },
-    { t: "지역 어르신 디지털 교실에서 도우미를 구한다.", a: [{ n: "스마트폰 사용법을 가르쳐 드린다", fx: { S: 2, R: 1 }, g: 0, en: -1 }, { n: "안내 자료를 만들어 드린다", fx: { C: 1, A: 1 }, g: 0, en: 0 }] }
+    { t: "시험 끝난 주말, 친구가 축제 준비를 같이 하자고 한다.", a: [{ n: "축제 준비를 돕는다", fx: { E: 1, S: 1 }, en: -1, sr: -10 }, { n: "밀린 공부를 한다", fx: { C: 1 }, en: -1, sr: 5, skill: 2 }] },
+    { t: "진로특강에서 만난 연구원이 연구실 견학을 제안했다.", a: [{ n: "견학을 간다", fx: { I: 2 }, en: -1, sr: -5 }, { n: "다음 기회로 미룬다", fx: {}, en: 1, sr: 0 }] },
+    { t: "금요일 밤 생성형 AI 해커톤 캠프 공지가 올라왔다.", a: [{ n: "팀을 꾸려 참가한다", fx: { R: 1, I: 1, E: 1 }, en: -2, sr: -5 }, { n: "푹 쉰다", fx: {}, en: 2, sr: -10 }] },
+    { t: "기숙사 룸메이트와 생활 습관 때문에 사이가 어색해졌다.", a: [{ n: "솔직하게 대화한다", fx: { S: 2 }, en: 0, sr: -10 }, { n: "사감 선생님과 규칙을 정한다", fx: { C: 1, S: 1 }, en: 0, sr: -5 }] },
+    { t: "IB 수업 시간, 선생님이 '우리는 그것을 어떻게 아는가?'라고 물었다.", a: [{ n: "근거를 찾아 발표한다", fx: { I: 1, E: 1 }, en: -1, sr: 0, skill: 1 }, { n: "다른 관점의 글을 써 본다", fx: { A: 1, I: 1 }, en: 0, sr: 0, skill: 1 }] },
+    { t: "선배와의 만남. 원하는 대학에 간 선배가 공부법을 알려 줬다.", a: [{ n: "공부 계획표를 새로 짠다", fx: { C: 1 }, en: 0, sr: 0, skill: 2 }, { n: "선배에게 활동 조언을 묻는다", fx: { E: 1, S: 1 }, en: 0, sr: -5 }] },
+    { t: "요즘 피곤해서 수업 시간에 자꾸 졸린다.", a: [{ n: "맨발 트랙을 걸으며 쉰다", fx: {}, en: 3, sr: -15 }, { n: "커피를 마시고 버틴다", fx: { C: 1 }, en: -1, sr: 10 }] },
+    { t: "서울대 나눔교실 대학생 멘토가 방학 캠프를 연다.", a: [{ n: "캠프에 참가한다", fx: { I: 1, S: 1 }, en: -1, sr: 0, skill: 3 }, { n: "집에서 쉰다", fx: {}, en: 2, sr: -15 }] },
+    { t: "학교 홍보 영상을 같이 찍자는 제안을 받았다.", a: [{ n: "출연하고 편집도 돕는다", fx: { A: 1, E: 1 }, en: -1, sr: -5 }, { n: "대본만 써 준다", fx: { A: 1, C: 1 }, en: 0, sr: 0 }] },
+    { t: "지역 어르신 디지털 교실에서 도우미를 구한다.", a: [{ n: "스마트폰 사용법을 가르쳐 드린다", fx: { S: 2, R: 1 }, en: -1, sr: -5 }, { n: "안내 자료를 만들어 드린다", fx: { C: 1, A: 1 }, en: 0, sr: 0 }] },
+    { t: "성적표를 본 부모님이 학원을 다녀 보자고 하신다.", a: [{ n: "학교 방과후와 자습으로 해 보겠다고 말씀드린다", fx: { E: 1 }, en: 0, sr: 5, skill: 1 }, { n: "선생님과 함께 공부 계획을 세운다", fx: { C: 1 }, en: 0, sr: -5, skill: 2 }] }
   ];
-  var TRACKS = [
-    { n: "자연·공학 과목 위주", d: "물리학, 화학, 미적분Ⅰ, 정보", fx: { I: 1, R: 1 } },
-    { n: "인문·사회 과목 위주", d: "사회와 문화, 세계사, 문학, 경제", fx: { S: 1, E: 1 } },
-    { n: "생명·보건 과목 위주", d: "생명과학, 화학, 확률과 통계, 보건", fx: { I: 1, S: 1 } },
-    { n: "예술·디자인 과목 위주", d: "미술, 음악, 매체 의사소통, 정보", fx: { A: 2 } }
-  ];
-  var BADGES = [
-    { id: "book", n: "책벌레", d: "도서관·독서 활동 3번", test: function (s) { return cnt(s, ["lib", "dadok"]) >= 3; } },
-    { id: "ai", n: "AI 개척자", d: "AI 활동 3번", test: function (s) { return cnt(s, ["aikkum", "vibe", "robit", "indie", "aimusic"]) >= 3; } },
-    { id: "lab", n: "밤샘 연구자", d: "R&E·1인 1탐구·소논문 2번", test: function (s) { return cnt(s, ["rne", "onetamgu", "ee"]) >= 2; } },
-    { id: "heart", n: "따뜻한 마음", d: "봉사·멘토링·캠페인 4번", test: function (s) { return cnt(s, ["donghaeng", "mentor", "mind", "night"]) >= 4; } },
-    { id: "stage", n: "무대 체질", d: "공연·축제·영상 3번", test: function (s) { return cnt(s, ["vivid", "festival", "frame"]) >= 3; } },
-    { id: "study", n: "자기주도학습왕", d: "자습·정독실 5번", test: function (s) { return cnt(s, ["jayul", "jeongdok", "cafe"]) >= 5; } },
-    { id: "balance", n: "균형 잡힌 사람", d: "모든 능력치 5 이상", test: function (s) { return STATS.every(function (x) { return s.st[x.k] >= 5; }); } },
-    { id: "fab", n: "반도체 꿈나무", d: "미니 팹 실습 2번", test: function (s) { return cnt(s, ["fab"]) >= 2; } }
-  ];
-  function cnt(s, ids) { return s.log.filter(function (l) { return ids.indexOf(l) >= 0; }).length; }
-
   /* ───── 학교 지도와 캐릭터 ───── */
   // 지도 위 장소 (x, y 는 지도 1000×300 기준)
   var NODES = {
@@ -187,122 +190,226 @@
   }
 
   /* ───── 상태 ───── */
-  var KEY = "yd_game_v1", st;
-  function fresh(name) { var o = { name: name || "", color: COLORS[0].c, pos: "gate", sem: 0, st: {}, g: 50, en: 8, log: [], track: null, picked: [], hand: [], done: false, events: [] }; STATS.forEach(function (x) { o.st[x.k] = 1; }); return o; }
+  var KEY = "yd_game_v2", st, root, busy = false;
+  function rnd(a, b) { return a + Math.random() * (b - a); }
+  function fresh(name) {
+    var o = { name: name || "", color: COLORS[0].c, pos: "gate", p: 0, st: {}, en: 8, sr: 20, minEn: 8, skill: {}, talent: {}, plan: { ko: 0, ma: 0, en: 0, ta: 0, rest: 0 }, acts: [], hand: [], log: [], exams: [], track: null, done: false };
+    STATS.forEach(function (x) { o.st[x.k] = 1; });
+    SUBJ.forEach(function (s) { o.talent[s.k] = Math.round(rnd(0.85, 1.2) * 100) / 100; o.skill[s.k] = Math.round(rnd(17, 27)); });
+    return o;
+  }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
   function load() { try { return JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) { return null; } }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
   function shuffle(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
-  function deal() {
-    var pool = CARDS.filter(function (c) { return (c.from || 0) <= st.sem; });
-    var study = pool.filter(function (c) { return !c.tag || c.id === "rest"; });
-    var acts = shuffle(pool.filter(function (c) { return c.tag && c.id !== "rest"; })).slice(0, 5);
-    var extra = shuffle(study).slice(0, 2);
-    st.hand = acts.concat(extra).map(function (c) { return c.id; });
-    st.picked = [];
-  }
-  function card(id) { return CARDS.find(function (c) { return c.id === id; }); }
-  function slotsUsed() { return st.picked.reduce(function (n, id) { return n + card(id).cost; }, 0); }
-  function apply(fx, g, en) { Object.keys(fx || {}).forEach(function (k) { st.st[k] = (st.st[k] || 0) + fx[k]; }); st.g = clamp(st.g + (g || 0), 0, 100); st.en = clamp(st.en + (en || 0), 0, 10); }
-  function fxText(c) {
+  function deal() { st.hand = shuffle(CARDS.filter(function (c) { return (c.from || 0) <= st.p; })).slice(0, 5).map(function (c) { return c.id; }); st.acts = []; }
+  function used() { return st.plan.ko + st.plan.ma + st.plan.en + st.plan.ta + st.plan.rest + st.acts.length * 2; }
+  function fxText(o) {
     var p = [];
-    STATS.forEach(function (x) { if (c.fx && c.fx[x.k]) p.push(x.name + " +" + c.fx[x.k]); });
-    if (c.g) p.push("성적 " + (c.g > 0 ? "+" : "") + c.g);
-    if (c.en) p.push("체력 " + (c.en > 0 ? "+" : "") + c.en);
+    STATS.forEach(function (x) { if (o.fx && o.fx[x.k]) p.push(x.name + " +" + o.fx[x.k]); });
+    if (o.sub) SUBJ.forEach(function (s) { if (o.sub[s.k]) p.push(subjName(s).split(" ")[0] + " 실력 +" + o.sub[s.k]); });
+    if (o.skill) p.push("모든 과목 실력 +" + o.skill);
+    if (o.en) p.push("체력 " + (o.en > 0 ? "+" : "") + o.en);
+    if (o.sr) p.push("스트레스 " + (o.sr > 0 ? "+" : "") + o.sr);
     return p.join(" · ") || "변화 없음";
   }
 
-  /* ───── 화면 ───── */
-  var root;
+  /* ───── 시험 계산 ───── */
+  function erf(x) { var t = 1 / (1 + 0.3275911 * Math.abs(x)); var y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x); return x >= 0 ? y : -y; }
+  function topPct(score, p) { var mu = 62 + p * 0.8, sd = 14; var z = (score - mu) / sd; return 1 - 0.5 * (1 + erf(z / Math.SQRT2)); } // 나보다 잘한 비율
+  function gradeOf(pct) { return pct <= 0.10 ? 1 : pct <= 0.34 ? 2 : pct <= 0.66 ? 3 : pct <= 0.90 ? 4 : 5; }
+  function efficiency() { return clamp(0.55 + 0.45 * (st.en / 10) - 0.4 * Math.max(0, (st.sr - 60) / 40), 0.3, 1.1); }
+  function condText() {
+    var e = efficiency();
+    return e >= 0.95 ? "컨디션 최고" : e >= 0.8 ? "컨디션 좋음" : e >= 0.6 ? "조금 지침" : "많이 지침";
+  }
+  function avgGrade(ex) { return Math.round(ex.subj.reduce(function (a, s) { return a + s.grade; }, 0) / ex.subj.length * 10) / 10; }
+
+  function simulate() {
+    var eff = efficiency(), studySlots = 0, prev = st.exams[st.exams.length - 1];
+    SUBJ.forEach(function (s) {
+      var n = st.plan[s.k]; studySlots += n;
+      if (n > 0) st.skill[s.k] += n * 2 * 0.85 * st.talent[s.k] * eff; else st.skill[s.k] -= 2.5;
+    });
+    st.acts.forEach(function (id) {
+      var c = card(id);
+      Object.keys(c.fx || {}).forEach(function (k) { st.st[k] += c.fx[k]; });
+      Object.keys(c.sub || {}).forEach(function (k) { st.skill[k] += c.sub[k]; });
+      st.en += c.en || 0; st.log.push(id);
+    });
+    st.sr += studySlots * 4 + st.acts.length - st.plan.rest * 10 - 4;
+    st.en += -studySlots * 0.45 + st.plan.rest * 1.0 + 1;
+    st.sr = clamp(Math.round(st.sr), 0, 100); st.en = clamp(Math.round(st.en * 10) / 10, 0, 10);
+    st.minEn = Math.min(st.minEn, st.en);
+    SUBJ.forEach(function (s) { st.skill[s.k] = clamp(Math.round(st.skill[s.k] * 10) / 10, 0, 80); });
+    // 시험
+    var cond = (st.en < 3 ? -6 : 0) + (st.sr > 75 ? -8 : st.sr > 60 ? -3 : 0);
+    var ex = { p: st.p, label: periodLabel(st.p), subj: [] };
+    SUBJ.forEach(function (s, i) {
+      var score = clamp(Math.round(34 + st.skill[s.k] * 1.15 + cond + rnd(-6, 6)), 0, 100);
+      var pct = topPct(score, st.p);
+      var ps = prev && prev.subj[i];
+      ex.subj.push({ k: s.k, name: subjName(s), h: st.plan[s.k] * 2, score: score, grade: gradeOf(pct), rank: clamp(1 + Math.floor(pct * (CLASS - 1)), 1, CLASS), prev: ps ? ps.score : null });
+    });
+    ex.avg = avgGrade(ex);
+    st.exams.push(ex);
+    return ex;
+  }
+
+  /* ───── 화면: 상단 정보판 ───── */
   function hud() {
     var max = Math.max.apply(null, STATS.map(function (x) { return st.st[x.k]; }).concat([8]));
-    return '<div class="g-hud"><ol class="g-sems" aria-label="학기 진행">' + SEM.map(function (s, i) { return '<li class="' + (i < st.sem ? "g-done" : i === st.sem ? "now" : "") + '"><span>' + s.replace("학년 ", "-").replace("학기", "") + "</span></li>"; }).join("") + "</ol>" +
-      '<div class="g-meters"><div class="g-meter"><span>체력</span><i style="--v:' + st.en * 10 + '%" class="m-en"></i><b>' + st.en + "/10</b></div>" +
-      '<div class="g-meter"><span>성적</span><i style="--v:' + st.g + '%" class="m-g"></i><b>' + gradeLabel(st.g) + "</b></div></div>" +
+    var last = st.exams[st.exams.length - 1];
+    var cells = []; for (var i = 0; i < PERIODS; i++) cells.push('<li class="' + (i < st.p ? "g-done" : i === st.p ? "now" : "") + '" title="' + periodLabel(i) + '"><span>' + (Math.floor(i / 4) + 1) + "-" + (Math.floor(i / 2) % 2 + 1) + (i % 2 ? " 기말" : " 중간") + "</span></li>");
+    return '<div class="g-hud"><ol class="g-sems g-12" aria-label="진행">' + cells.join("") + "</ol>" +
+      '<div class="g-meters"><div class="g-meter"><span>체력</span><i style="--v:' + st.en * 10 + '%" class="m-en"></i><b>' + Math.round(st.en) + '/10</b></div>' +
+      '<div class="g-meter"><span>스트레스</span><i style="--v:' + st.sr + '%" class="m-sr"></i><b>' + st.sr + "</b></div>" +
+      '<div class="g-meter g-last"><span>지난 시험</span><b>' + (last ? "평균 " + last.avg.toFixed(1) + "등급" : "아직 없음") + "</b></div></div>" +
       '<div class="g-stats">' + STATS.map(function (x) { return '<div class="g-stat"><span>' + x.name + '</span><i style="--v:' + Math.round(st.st[x.k] / max * 100) + "%;--c:" + x.c + '"></i><b>' + st.st[x.k] + "</b></div>"; }).join("") + "</div></div>";
   }
-  function gradeLabel(g) { return g >= 80 ? "최상위권" : g >= 65 ? "상위권" : g >= 45 ? "중위권" : "노력 필요"; }
 
+  /* ───── 화면: 시간표 짜기 ───── */
   function render() {
+    if (busy) return;
     if (!st || !st.name) return renderStart();
     if (st.done) return renderEnd();
-    if (st.sem === 2 && !st.track) return renderTrack();
+    if (st.p === 4 && !st.track) return renderTrack();
     if (!st.hand.length) { deal(); save(); }
-    var left = 3 - slotsUsed();
-    root.innerHTML = hud() +
-      mapHTML() + '<section class="g-play"><h2>' + SEM[st.sem] + '<small>이번 학기에 할 일을 골라 주세요. 시간 칸 <b>' + left + "</b>개 남음</small></h2>" +
-      (st.en <= 2 ? '<p class="g-warn">체력이 바닥났어요. 쉬는 활동을 하나 넣어 보세요.</p>' : "") +
-      '<div class="g-cards">' + st.hand.map(function (id) {
-        var c = card(id), on = st.picked.indexOf(id) >= 0, dis = !on && c.cost > left;
-        return '<button class="g-card' + (on ? " on" : "") + '" data-id="' + id + '"' + (dis ? " disabled" : "") + ' aria-pressed="' + on + '"><span class="g-e" aria-hidden="true">' + c.e + "</span><b>" + esc(c.n) + '</b><span class="g-p">' + esc(c.p) + (c.cost > 1 ? " · 시간 2칸" : "") + '</span><span class="g-fx">' + fxText(c) + "</span></button>";
-      }).join("") + "</div>" +
-      '<div class="g-actions"><button class="btn btn-primary" id="gNext"' + (st.picked.length ? "" : " disabled") + ">" + (st.sem === 5 ? "졸업하기" : "이번 학기 마치기") + '</button><button class="btn btn-ghost btn-small" id="gReset">처음부터</button></div></section>';
+    var left = SLOTS - used();
+    var rows = SUBJ.map(function (s) {
+      var n = st.plan[s.k], lv = Math.round(st.skill[s.k]);
+      return '<div class="pl-row"><span class="pl-e" aria-hidden="true">' + s.e + '</span><div class="pl-name"><b>' + esc(subjName(s)) + '</b><span class="pl-skill"><i style="--v:' + Math.round(lv / 80 * 100) + '%"></i>실력 ' + lv + "</span></div>" +
+        '<div class="pl-step"><button type="button" data-k="' + s.k + '" data-d="-1" aria-label="' + esc(subjName(s)) + ' 줄이기"' + (n ? "" : " disabled") + '>−</button><output aria-live="polite">' + n * 2 + '시간</output><button type="button" data-k="' + s.k + '" data-d="1" aria-label="' + esc(subjName(s)) + ' 늘리기"' + (left > 0 ? "" : " disabled") + ">+</button></div></div>";
+    }).join("");
+    var rest = '<div class="pl-row pl-rest"><span class="pl-e" aria-hidden="true">👣</span><div class="pl-name"><b>쉬기 · 맨발 트랙 산책</b><span class="pl-skill pl-note">체력을 채우고 스트레스를 풀어요</span></div><div class="pl-step"><button type="button" data-k="rest" data-d="-1" aria-label="쉬는 시간 줄이기"' + (st.plan.rest ? "" : " disabled") + '>−</button><output>' + st.plan.rest * 2 + '시간</output><button type="button" data-k="rest" data-d="1" aria-label="쉬는 시간 늘리기"' + (left > 0 ? "" : " disabled") + ">+</button></div></div>";
+    var cards = st.hand.map(function (id) {
+      var c = card(id), on = st.acts.indexOf(id) >= 0, dis = !on && (left < 2 || st.acts.length >= 2);
+      return '<button class="g-card' + (on ? " on" : "") + '" data-id="' + id + '"' + (dis ? " disabled" : "") + ' aria-pressed="' + on + '"><span class="g-e" aria-hidden="true">' + c.e + "</span><b>" + esc(c.n) + '</b><span class="g-p">' + esc(c.p) + ' · 4시간</span><span class="g-fx">' + fxText(c) + "</span></button>";
+    }).join("");
+    root.innerHTML = hud() + mapHTML() +
+      '<section class="g-play"><h2>' + periodLabel(st.p) + '까지<small>방과후·자습 시간 20시간을 나눠 쓰세요. 남은 시간 <b>' + left * 2 + "시간</b> · " + condText() + "</small></h2>" +
+      (st.en <= 2.5 ? '<p class="g-warn">체력이 바닥이에요. 이대로면 시험 때 실수가 많아져요. 쉬는 시간을 넣어 보세요.</p>' : st.sr >= 70 ? '<p class="g-warn">스트레스가 너무 높아요. 공부 효율이 떨어지고 있어요.</p>' : "") +
+      '<div class="pl-grid"><div class="pl-box"><h3>공부 시간표</h3>' + rows + rest + '<p class="pl-hint">한 번도 공부하지 않은 과목은 실력이 조금씩 떨어져요.</p></div>' +
+      '<div class="pl-box"><h3>동아리 · 활동 <small>최대 2개</small></h3><div class="g-cards g-cards-sm">' + cards + "</div></div></div>" +
+      '<div class="g-actions"><button class="btn btn-primary" id="gNext"' + (used() ? "" : " disabled") + '>이 계획으로 보내고 시험 보기</button><button class="btn btn-ghost btn-small" id="gAuto">계획 비우기</button><button class="btn btn-ghost btn-small" id="gReset">처음부터</button></div></section>';
+    root.querySelectorAll(".pl-step button").forEach(function (b) {
+      b.onclick = function () { var k = b.dataset.k, d = +b.dataset.d; if (d > 0 && SLOTS - used() <= 0) return; st.plan[k] = clamp(st.plan[k] + d, 0, SLOTS); save(); render(); var nb = root.querySelector('.pl-step button[data-k="' + k + '"][data-d="' + d + '"]'); if (nb && !nb.disabled) nb.focus(); };
+    });
     root.querySelectorAll(".g-card").forEach(function (b) {
       b.onclick = function () {
-        var id = b.dataset.id, i = st.picked.indexOf(id), c = card(id);
-        if (i >= 0) { st.picked.splice(i, 1); } else { st.picked.push(id); }
-        var keepPos = st.pos; save(); render();
-        if (i < 0) { st.pos = keepPos; moveTo(LOC[id] || "classroom", c.e + " " + NODES[LOC[id] || "classroom"].n + "(으)로!", ""); save(); }
+        var id = b.dataset.id, i = st.acts.indexOf(id);
+        if (i >= 0) st.acts.splice(i, 1); else st.acts.push(id);
+        save(); render();
+        if (i < 0) moveTo(LOC[id] || "classroom", card(id).e + " " + card(id).n, "");
       };
     });
-    root.querySelector("#gNext").onclick = endSemester;
-    root.querySelector("#gReset").onclick = function () { st = fresh(st.name); save(); render(); };
+    root.querySelector("#gNext").onclick = runPeriod;
+    root.querySelector("#gAuto").onclick = function () { st.plan = { ko: 0, ma: 0, en: 0, ta: 0, rest: 0 }; st.acts = []; save(); render(); };
+    root.querySelector("#gReset").onclick = function () { var c = st.color; st = fresh(st.name); st.color = c; deal(); save(); render(); };
   }
 
-  function renderStart() {
-    var id = null; try { id = JSON.parse(sessionStorage.getItem("yd_id") || "null"); } catch (e) {}
-    var saved = load();
-    root.innerHTML = '<section class="g-start"><div class="g-start-art" aria-hidden="true"><div class="g-start-ch">' + charSVG(COLORS[0].c) + '</div>' + SEM.map(function (s, i) { return '<span style="--i:' + i + '">' + s + "</span>"; }).join("") + "</div>" +
-      '<div><h2>예당고 3년, 미리 살아 보기</h2><p>2027년 3월, 예당고에 입학했어요. 6학기 동안 동아리·탐구·봉사·공부·휴식 가운데 무엇을 할지 고르세요. 고른 활동이 쌓여 졸업할 때 나에게 맞는 진로가 나타납니다.</p>' +
-      '<ul class="g-rules"><li>학기마다 시간 칸 3개를 씁니다.</li><li>활동마다 만들기·탐구·표현·소통·도전·꼼꼼 능력치가 오릅니다.</li><li>공부를 안 하면 성적이, 쉬지 않으면 체력이 떨어져요.</li></ul>' +
-      '<div class="g-prize"><b>끝까지 졸업하면 상품이 있어요!</b><span>완주 기념품을 드리고, 응모한 학생 중 추첨해 문화상품권도 드려요.</span></div>' +
-      '<form id="gStart" class="g-form"><fieldset class="g-colors"><legend>내 캐릭터 고르기</legend><div class="g-color-row">' + COLORS.map(function (c, i) { return '<label class="g-color"><input type="radio" name="gColor" value="' + c.c + '"' + (i === 0 ? " checked" : "") + '><span class="g-color-ch">' + charSVG(c.c) + "</span><em>" + c.n + "</em></label>"; }).join("") + '</div></fieldset><label for="gName">이름</label><div class="g-row"><input id="gName" maxlength="12" placeholder="이름 또는 별명" value="' + esc((id && id.name) || "") + '"><button class="btn btn-primary" type="submit">입학하기</button></div></form>' +
-      (saved && saved.name && !saved.done ? '<button class="btn btn-ghost btn-small" id="gCont">' + esc(saved.name) + " 학생, " + SEM[saved.sem] + "부터 이어 하기</button>" : "") + "</div></section>";
-    root.querySelector("#gStart").onsubmit = function (e) { e.preventDefault(); var n = root.querySelector("#gName").value.trim() || "예당이"; st = fresh(n); var col = root.querySelector('input[name="gColor"]:checked'); if (col) st.color = col.value; deal(); save(); render(); setTimeout(function () { moveTo("classroom", "입학 첫날! 본관으로 가 볼까?", ""); save(); }, 300); };
-    var c = root.querySelector("#gCont"); if (c) c.onclick = function () { st = saved; render(); };
+  function runPeriod() {
+    busy = true;
+    root.querySelectorAll("button").forEach(function (b) { b.disabled = true; });
+    SUBJ.forEach(function (s) { if (st.plan[s.k]) moveTo(s.where, s.e + " " + subjName(s).split(" ")[0] + " " + st.plan[s.k] * 2 + "시간", ""); });
+    st.acts.forEach(function (id) { var c = card(id); moveTo(LOC[id] || "classroom", c.e + " " + c.n, popText(c)); });
+    if (st.plan.rest) moveTo("track", "👣 푹 쉬기 " + st.plan.rest * 2 + "시간", "");
+    moveTo("classroom", "📝 " + (st.p % 2 ? "기말고사" : "중간고사") + "!", "");
+    walkQ.then(function () { return new Promise(function (r) { setTimeout(r, 400); }); }).then(function () {
+      var ex = simulate(); save();
+      showReport(ex);
+    });
   }
 
-  function renderTrack() {
-    root.innerHTML = hud() + '<section class="g-play"><h2>2학년 과목 선택<small>고교학점제! 2학년부터는 듣고 싶은 과목을 직접 고릅니다.</small></h2><div class="g-cards">' +
-      TRACKS.map(function (t, i) { return '<button class="g-card" data-i="' + i + '"><span class="g-e" aria-hidden="true">🗂️</span><b>' + esc(t.n) + '</b><span class="g-p">' + esc(t.d) + '</span><span class="g-fx">' + fxText({ fx: t.fx }) + "</span></button>"; }).join("") + "</div></section>";
-    root.querySelectorAll(".g-card").forEach(function (b) { b.onclick = function () { var t = TRACKS[+b.dataset.i]; st.track = t.n; apply(t.fx, 0, 0); deal(); save(); render(); }; });
+  function comment(ex) {
+    var prev = st.exams[st.exams.length - 2];
+    var low = ex.subj.slice().sort(function (a, b) { return b.grade - a.grade; })[0];
+    if (st.en < 3) return "체력이 바닥난 채로 시험을 봤어요. 다음에는 쉬는 시간도 계획에 넣어 보세요.";
+    if (st.sr > 75) return "스트레스가 너무 높아 실력을 다 못 보여 줬어요. 쉬기와 활동으로 숨을 돌려 보세요.";
+    if (prev && ex.avg <= prev.avg - 0.7) return "지난 시험보다 크게 올랐어요! 지금 공부 방법이 잘 맞고 있어요.";
+    if (prev && ex.avg >= prev.avg + 0.7) return "지난 시험보다 내려갔어요. " + low.name + " 공부 시간을 늘려 보면 어떨까요?";
+    if (ex.avg <= 1.8) return "최상위권 성적이에요. 이제 활동으로 진로 이야기를 채워 볼까요?";
+    if (low.grade >= 4) return low.name + "이(가) 약점이에요. 다음 기간에는 이 과목에 시간을 더 써 보세요.";
+    return "꾸준히 하고 있어요. 공부와 활동, 휴식의 균형을 잘 맞춰 보세요.";
   }
-
-  function endSemester() {
-    var btn = root.querySelector("#gNext"); if (btn) btn.disabled = true;
-    root.querySelectorAll(".g-card").forEach(function (b) { b.disabled = true; });
-    st.picked.forEach(function (id) { var c = card(id); moveTo(LOC[id] || "classroom", c.e + " " + c.n, popText(c)); });
-    walkQ.then(function () { return new Promise(function (r) { setTimeout(r, 500); }); }).then(finishSemester);
-  }
-  function finishSemester() {
-    st.picked.forEach(function (id) { var c = card(id); apply(c.fx, c.g, c.en); st.log.push(id); });
-    st.g = clamp(st.g + (st.en <= 1 ? -3 : 0) - 1, 0, 100); // 시간이 지나면 성적은 조금씩 내려가요(복습 필요)
-    st.en = clamp(st.en + 1, 0, 10);
-    var gained = st.picked.slice();
-    st.picked = []; st.hand = [];
-    if (st.sem === 5) { st.done = true; save(); return render(); }
-    var ev = EVENTS[Math.floor(Math.random() * EVENTS.length)];
-    showEvent(ev, gained);
-  }
-  function showEvent(ev, gained) {
+  function showReport(ex) {
     var bg = document.createElement("div");
     bg.className = "modal-bg";
-    bg.innerHTML = '<div class="modal g-ev" role="dialog" aria-modal="true" aria-labelledby="evT"><p class="g-ev-k">' + SEM[st.sem] + ' 끝 · 이번 학기 기록</p><p class="g-ev-log">' + gained.map(function (id) { return card(id).e + " " + esc(card(id).n); }).join("<br>") + '</p><h2 id="evT">' + esc(ev.t) + '</h2><div class="g-ev-a">' +
+    bg.innerHTML = '<div class="modal g-ev g-report" role="dialog" aria-modal="true" aria-labelledby="rpT"><p class="g-ev-k">' + esc(st.name) + ' 학생 성적표</p><h2 id="rpT">' + esc(ex.label) + "</h2>" +
+      '<table class="rp"><thead><tr><th>과목</th><th>공부</th><th>점수</th><th>등급</th><th>석차</th></tr></thead><tbody>' + ex.subj.map(function (s) {
+        var d = s.prev == null ? "" : s.score > s.prev ? '<em class="up">▲' + (s.score - s.prev) + "</em>" : s.score < s.prev ? '<em class="dn">▼' + (s.prev - s.score) + "</em>" : '<em>-</em>';
+        return "<tr><td>" + esc(s.name) + "</td><td>" + s.h + "시간</td><td><b>" + s.score + "</b> " + d + '</td><td><span class="gr gr' + s.grade + '">' + s.grade + "등급</span></td><td>" + s.rank + "/" + CLASS + "</td></tr>";
+      }).join("") + "</tbody></table>" +
+      '<p class="rp-avg">평균 <b>' + ex.avg.toFixed(1) + '등급</b> · 체력 ' + Math.round(st.en) + " · 스트레스 " + st.sr + '</p><p class="rp-c">💬 ' + esc(comment(ex)) + '</p><div class="g-ev-a"><button class="btn btn-primary" id="rpOk">확인</button></div></div>';
+    document.body.appendChild(bg);
+    var ok = bg.querySelector("#rpOk"); ok.focus();
+    ok.onclick = function () { bg.remove(); afterExam(); };
+  }
+  function afterExam() {
+    st.plan = { ko: 0, ma: 0, en: 0, ta: 0, rest: 0 }; st.acts = []; st.hand = [];
+    st.p++;
+    if (st.p >= PERIODS) { st.done = true; busy = false; save(); render(); return; }
+    if (Math.random() < 0.6) { var ev = EVENTS[Math.floor(Math.random() * EVENTS.length)]; showEvent(ev); }
+    else { busy = false; save(); render(); }
+  }
+  function showEvent(ev) {
+    var bg = document.createElement("div");
+    bg.className = "modal-bg";
+    bg.innerHTML = '<div class="modal g-ev" role="dialog" aria-modal="true" aria-labelledby="evT"><p class="g-ev-k">학교생활 이야기</p><h2 id="evT">' + esc(ev.t) + '</h2><div class="g-ev-a">' +
       ev.a.map(function (a, i) { return '<button class="btn ' + (i ? "btn-ghost" : "btn-primary") + '" data-i="' + i + '">' + esc(a.n) + "<small>" + fxText(a) + "</small></button>"; }).join("") + "</div></div>";
     document.body.appendChild(bg);
     bg.querySelectorAll("[data-i]").forEach(function (b) {
-      b.onclick = function () { var a = ev.a[+b.dataset.i]; apply(a.fx, a.g, a.en); st.events.push(ev.t); st.sem++; save(); bg.remove(); render(); window.scrollTo({ top: root.offsetTop - 70, behavior: "smooth" }); };
+      b.onclick = function () {
+        var a = ev.a[+b.dataset.i];
+        Object.keys(a.fx || {}).forEach(function (k) { st.st[k] += a.fx[k]; });
+        if (a.skill) SUBJ.forEach(function (s) { st.skill[s.k] = clamp(st.skill[s.k] + a.skill, 0, 80); });
+        st.en = clamp(st.en + (a.en || 0), 0, 10); st.sr = clamp(st.sr + (a.sr || 0), 0, 100);
+        busy = false; save(); bg.remove(); render(); window.scrollTo({ top: root.offsetTop - 70, behavior: "smooth" });
+      };
     });
     bg.querySelector("[data-i]").focus();
   }
 
+  /* ───── 화면: 시작 · 과목 선택 ───── */
+  function renderStart() {
+    var id = null; try { id = JSON.parse(sessionStorage.getItem("yd_id") || "null"); } catch (e) {}
+    var saved = load();
+    root.innerHTML = '<section class="g-start"><div class="g-start-art" aria-hidden="true"><div class="g-start-ch">' + charSVG(COLORS[0].c) + "</div>" + SEM.map(function (s, i) { return '<span style="--i:' + i + '">' + s + "</span>"; }).join("") + "</div>" +
+      '<div><h2>예당고 3년, 미리 살아 보기</h2><p>2027년 3월, 예당고에 입학했어요. 시험 기간마다 방과후·자습 20시간을 공부, 동아리, 휴식에 어떻게 나눌지 정해 보세요. 공부한 만큼 시험 점수와 등급이 나오고, 활동이 쌓여 졸업할 때 나에게 맞는 진로가 나타나요.</p>' +
+      '<ul class="g-rules"><li>3년 동안 시험 12번(학기마다 중간·기말). 54명 중 석차와 5등급제 등급이 나와요.</li><li>공부를 많이 하면 실력이 오르지만 체력이 줄고 스트레스가 쌓여요.</li><li>지치면 공부 효율도 시험 점수도 떨어져요. 쉬는 것도 실력이에요.</li></ul>' +
+      '<div class="g-prize"><b>끝까지 졸업하면 상품이 있어요!</b><span>완주 기념품을 드리고, 응모한 학생 중 추첨해 문화상품권도 드려요.</span></div>' +
+      '<form id="gStart" class="g-form"><fieldset class="g-colors"><legend>내 캐릭터 고르기</legend><div class="g-color-row">' + COLORS.map(function (c, i) { return '<label class="g-color"><input type="radio" name="gColor" value="' + c.c + '"' + (i === 0 ? " checked" : "") + '><span class="g-color-ch">' + charSVG(c.c) + "</span><em>" + c.n + "</em></label>"; }).join("") + '</div></fieldset><label for="gName">이름</label>' +
+      '<div class="g-row"><input id="gName" maxlength="12" placeholder="이름 또는 별명" value="' + esc((id && id.name) || "") + '"><button class="btn btn-primary" type="submit">입학하기</button></div></form>' +
+      (saved && saved.name && !saved.done ? '<button class="btn btn-ghost btn-small" id="gCont">' + esc(saved.name) + " 학생, " + periodLabel(saved.p) + "부터 이어 하기</button>" : "") + "</div></section>";
+    root.querySelector("#gStart").onsubmit = function (e) {
+      e.preventDefault();
+      var n = root.querySelector("#gName").value.trim() || "예당이"; st = fresh(n);
+      var col = root.querySelector('input[name="gColor"]:checked'); if (col) st.color = col.value;
+      deal(); save(); render();
+      setTimeout(function () { moveTo("classroom", "입학 첫날! 첫 시험까지 계획을 세워 볼까?", ""); }, 300);
+    };
+    var c = root.querySelector("#gCont"); if (c) c.onclick = function () { st = saved; render(); };
+  }
+  function renderTrack() {
+    root.innerHTML = hud() + '<section class="g-play"><h2>2학년 과목 선택<small>고교학점제! 2학년부터는 듣고 싶은 과목을 직접 골라요. 고른 과목이 시험 과목이 됩니다.</small></h2><div class="g-cards">' +
+      TRACKS.map(function (t, i) { return '<button class="g-card" data-i="' + i + '"><span class="g-e" aria-hidden="true">🗂️</span><b>' + esc(t.n) + '</b><span class="g-p">' + esc(t.d) + '</span><span class="g-fx">' + fxText({ fx: t.fx }) + " · 관련 과목 적성 조금 상승</span></button>"; }).join("") + "</div></section>";
+    root.querySelectorAll(".g-card").forEach(function (b) {
+      b.onclick = function () {
+        var t = TRACKS[+b.dataset.i]; st.track = t.n;
+        Object.keys(t.fx).forEach(function (k) { st.st[k] += t.fx[k]; });
+        Object.keys(t.talent).forEach(function (k) { st.talent[k] = Math.round((st.talent[k] + t.talent[k]) * 100) / 100; });
+        deal(); save(); render();
+      };
+    });
+  }
+
+  /* ───── 화면: 졸업 ───── */
   function match() {
     var v = STATS.map(function (x) { return st.st[x.k]; });
     var mean = v.reduce(function (a, b) { return a + b; }, 0) / 6;
     var vc = v.map(function (x) { return x - mean; });
-    var F = window.YD.FIELDS;
-    return F.map(function (f) {
+    return window.YD.FIELDS.map(function (f) {
       var p = PROFILE[f.id] || [1, 1, 1, 1, 1, 1], pm = p.reduce(function (a, b) { return a + b; }, 0) / 6;
       var pc = p.map(function (x) { return x - pm; });
       var dot = 0, a = 0, b = 0; for (var i = 0; i < 6; i++) { dot += vc[i] * pc[i]; a += vc[i] * vc[i]; b += pc[i] * pc[i]; }
@@ -315,29 +422,57 @@
     var grid = [0.33, 0.66, 1].map(function (k) { return '<polygon points="' + STATS.map(function (_, i) { return pt(i, R * k).join(","); }).join(" ") + '" fill="none" stroke="rgba(255,255,255,.18)"/>'; }).join("");
     var poly = '<polygon points="' + STATS.map(function (x, i) { return pt(i, R * st.st[x.k] / max).join(","); }).join(" ") + '" fill="rgba(201,234,106,.35)" stroke="#C9EA6A" stroke-width="2.5"/>';
     var labels = STATS.map(function (x, i) { var p = pt(i, R + 22); return '<text x="' + p[0] + '" y="' + (p[1] + 5) + '" text-anchor="middle" fill="#DDEBE1" font-size="13" font-weight="700">' + x.name + " " + st.st[x.k] + "</text>"; }).join("");
-    return '<svg viewBox="0 0 300 290" role="img" aria-label="능력치 그래프">' + grid + poly + labels + "</svg>";
+    return '<svg viewBox="0 0 300 290" role="img" aria-label="진로 능력치 그래프">' + grid + poly + labels + "</svg>";
   }
+  function gradeChart() {
+    var ex = st.exams, W = 600, H = 220, L = 46, R = 14, T = 16, B = 34;
+    if (!ex.length) return "";
+    function x(i) { return L + (W - L - R) * (ex.length === 1 ? 0.5 : i / (ex.length - 1)); }
+    function y(g) { return T + (H - T - B) * (g - 1) / 4; }
+    var grid = [1, 2, 3, 4, 5].map(function (g) { return '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(g) + '" y2="' + y(g) + '" stroke="#DFE6DE"/><text x="' + (L - 8) + '" y="' + (y(g) + 4) + '" text-anchor="end" font-size="12" fill="#5A665E">' + g + "등급</text>"; }).join("");
+    var pts = ex.map(function (e, i) { return x(i) + "," + y(e.avg); }).join(" ");
+    var dots = ex.map(function (e, i) { return '<circle cx="' + x(i) + '" cy="' + y(e.avg) + '" r="4.5" fill="#143A2B"><title>' + e.label + " 평균 " + e.avg.toFixed(1) + "등급</title></circle>"; }).join("");
+    var xl = ex.map(function (e, i) { return i % 2 ? "" : '<text x="' + x(i) + '" y="' + (H - 10) + '" text-anchor="middle" font-size="11.5" fill="#5A665E">' + (Math.floor(i / 4) + 1) + "-" + (Math.floor(i / 2) % 2 + 1) + "</text>"; }).join("");
+    return '<svg class="g-chart" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="시험별 평균 등급 그래프">' + grid + '<polyline points="' + pts + '" fill="none" stroke="#2C7350" stroke-width="3" stroke-linejoin="round"/>' + dots + xl + "</svg>";
+  }
+  var BADGES = [
+    { n: "전교 1등", d: "한 과목이라도 석차 1등", test: function () { return st.exams.some(function (e) { return e.subj.some(function (s) { return s.rank === 1; }); }); } },
+    { n: "꾸준한 공부", d: "모든 시험 평균 3등급 이내", test: function () { return st.exams.length && st.exams.every(function (e) { return e.avg <= 3; }); } },
+    { n: "역전의 명수", d: "첫 시험보다 평균 1.5등급 이상 상승", test: function () { var a = st.exams[0], b = Math.min.apply(null, st.exams.map(function (e) { return e.avg; })); return a && a.avg - b >= 1.5; } },
+    { n: "건강 지킴이", d: "3년 내내 체력 4 이상 유지", test: function () { return st.minEn >= 4; } },
+    { n: "책벌레", d: "독서 활동 3번", test: function () { return cnt(["lib", "dadok", "write"]) >= 3; } },
+    { n: "AI 개척자", d: "AI 활동 3번", test: function () { return cnt(["aikkum", "vibe", "robit", "indie", "aimusic"]) >= 3; } },
+    { n: "밤샘 연구자", d: "1인 1탐구·R&E·소논문 2번", test: function () { return cnt(["rne", "onetamgu", "ee"]) >= 2; } },
+    { n: "따뜻한 마음", d: "봉사·멘토링·캠페인 4번", test: function () { return cnt(["donghaeng", "mentor", "mind", "night"]) >= 4; } },
+    { n: "반도체 꿈나무", d: "미니 팹 실습 2번", test: function () { return cnt(["fab"]) >= 2; } }
+  ];
+  function cnt(ids) { return st.log.filter(function (l) { return ids.indexOf(l) >= 0; }).length; }
   function renderEnd() {
     var m = match(), best = m[0].f, alts = [m[1].f, m[2].f];
-    var acts = []; st.log.forEach(function (id) { var c = card(id); if (c.tag && acts.indexOf(c.tag) < 0) acts.push(c.tag); });
-    var badges = BADGES.filter(function (b) { return b.test(st); });
+    var acts = []; st.log.forEach(function (id) { var c = card(id); if (c && c.tag && acts.indexOf(c.tag) < 0) acts.push(c.tag); });
+    var badges = BADGES.filter(function (b) { return b.test(); });
     var top2 = STATS.slice().sort(function (a, b) { return st.st[b.k] - st.st[a.k]; }).slice(0, 2);
-    try { localStorage.setItem("yd_game_last", JSON.stringify({ name: st.name, field: best.id, at: Date.now() })); } catch (e) {}
-    root.innerHTML = '<section class="g-end"><div class="g-end-head"><div><p class="g-ev-k">' + esc(st.name) + ' 학생의 예당고 3년</p><h2>졸업을 축하해요!</h2><p>' + esc(top2[0].name) + "과 " + esc(top2[1].name) + " 능력이 가장 많이 자랐어요. 이 모양과 가장 닮은 진로는</p>" +
-      '<div class="g-best"><span aria-hidden="true">' + best.emoji + "</span><b>" + esc(best.name) + "</b></div><p class=\"g-sub\">" + esc(best.tagline) + "</p>" +
+    var all = st.exams.length ? Math.round(st.exams.reduce(function (a, e) { return a + e.avg; }, 0) / st.exams.length * 10) / 10 : 0;
+    var bestRank = Math.min.apply(null, st.exams.map(function (e) { return Math.min.apply(null, e.subj.map(function (s) { return s.rank; })); }));
+    try { localStorage.setItem("yd_game_last", JSON.stringify({ name: st.name, field: best.id, avg: all, at: Date.now() })); } catch (e) {}
+    root.innerHTML = '<section class="g-end"><div class="g-end-head"><div><p class="g-ev-k">' + esc(st.name) + ' 학생의 예당고 3년</p><h2>졸업을 축하해요!</h2><p>3년 내신 평균 <b style="color:#C9EA6A">' + all.toFixed(1) + "등급</b>, 최고 석차 " + bestRank + "등. " + esc(top2[0].name) + "과 " + esc(top2[1].name) + " 능력이 가장 많이 자랐어요. 이 모양과 가장 닮은 진로는</p>" +
+      '<div class="g-best"><span aria-hidden="true">' + best.emoji + "</span><b>" + esc(best.name) + '</b></div><p class="g-sub">' + esc(best.tagline) + "</p>" +
       '<div class="g-end-btns"><a class="btn btn-sprout" href="#/f/' + best.id + '/1">이 진로 로드맵 보기</a><a class="btn btn-ghost g-light" href="#/booking?f=' + best.id + '">이 결과로 상담 신청</a></div></div>' +
       '<div class="g-radar"><div class="g-end-ch">' + charSVG(st.color || COLORS[0].c) + "</div>" + radar() + "</div></div>" +
+      '<div class="g-end-chart"><h3>시험별 평균 등급</h3>' + gradeChart() + "</div>" +
       '<div class="g-end-body"><div><h3>이런 진로도 어울려요</h3><ul class="g-alts">' + alts.map(function (f) { return '<li><a href="#/f/' + f.id + '/1">' + f.emoji + " " + esc(f.name) + "</a></li>"; }).join("") + "</ul>" +
-      "<h3>얻은 배지</h3>" + (badges.length ? '<ul class="g-badges">' + badges.map(function (b) { return "<li><b>" + esc(b.n) + "</b><span>" + esc(b.d) + "</span></li>"; }).join("") + "</ul>" : '<p class="g-muted">이번엔 배지가 없어요. 다른 활동 조합으로 다시 도전해 보세요.</p>') +
-      "<p class=\"g-muted\">최종 성적: " + gradeLabel(st.g) + " · 2학년 과목: " + esc(st.track || "-") + "</p></div>" +
-      '<div><h3>내 생활기록부에 남을 이야기</h3><ul class="ul">' + acts.slice(-8).map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul></div></div>" +
+      "<h3>얻은 배지</h3>" + (badges.length ? '<ul class="g-badges">' + badges.map(function (b) { return "<li><b>" + esc(b.n) + "</b><span>" + esc(b.d) + "</span></li>"; }).join("") + "</ul>" : '<p class="g-muted">이번엔 배지가 없어요. 다른 계획으로 다시 도전해 보세요.</p>') +
+      '<p class="g-muted">2학년 과목: ' + esc(st.track || "-") + "</p></div>" +
+      '<div><h3>내 생활기록부에 남을 이야기</h3>' + (acts.length ? '<ul class="ul">' + acts.slice(-8).map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul>" : '<p class="g-muted">동아리·활동을 하지 않아 기록할 이야기가 없어요. 대학은 성적과 함께 활동 이야기도 봐요!</p>') + "</div></div>" +
       prizeHTML(best) +
       '<div class="g-actions"><button class="btn btn-primary" id="gAgain">다른 3년 살아 보기</button><button class="btn btn-ghost" id="gShare">결과 저장</button></div>' +
-      '<p class="src">게임 결과는 재미로 보는 참고용이에요. 진짜 진로는 활동을 해 보며 조금씩 찾아가는 거예요.</p></section>';
+      '<p class="src">게임 결과는 재미로 보는 참고용이에요. 진짜 성적과 진로는 직접 공부하고 활동해 보며 만들어 가는 거예요.</p></section>';
     bindPrize(best);
-    root.querySelector("#gAgain").onclick = function () { st = fresh(st.name); deal(); save(); render(); window.scrollTo(0, 0); };
+    root.querySelector("#gAgain").onclick = function () { var c = st.color; st = fresh(st.name); st.color = c; deal(); save(); render(); window.scrollTo(0, 0); };
     root.querySelector("#gShare").onclick = function () {
-      var t = ["예당고 3년 미리 살기 결과", "이름: " + st.name, "추천 진로: " + best.name, "어울리는 진로: " + alts.map(function (f) { return f.name; }).join(", "), "능력치: " + STATS.map(function (x) { return x.name + " " + st.st[x.k]; }).join(", "), "배지: " + (badges.map(function (b) { return b.n; }).join(", ") || "-"), "", "생활기록부 이야기:"].concat(acts.map(function (a) { return "- " + a; })).join("\n");
+      var t = ["예당고 3년 미리 살기 결과", "이름: " + st.name, "3년 내신 평균: " + all.toFixed(1) + "등급", "추천 진로: " + best.name, "어울리는 진로: " + alts.map(function (f) { return f.name; }).join(", "), "진로 능력치: " + STATS.map(function (x) { return x.name + " " + st.st[x.k]; }).join(", "), "배지: " + (badges.map(function (b) { return b.n; }).join(", ") || "-"), "", "시험 결과:"]
+        .concat(st.exams.map(function (e) { return "- " + e.label + ": 평균 " + e.avg.toFixed(1) + "등급 (" + e.subj.map(function (s) { return s.name + " " + s.score + "점 " + s.grade + "등급"; }).join(", ") + ")"; }))
+        .concat(["", "생활기록부 이야기:"]).concat(acts.map(function (a) { return "- " + a; })).join("\n");
       var blob = new Blob([t], { type: "text/plain;charset=utf-8" }); var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "예당고_3년미리살기_" + st.name + ".txt"; document.body.appendChild(a); a.click(); setTimeout(function () { a.remove(); }, 200);
     };
   }
@@ -378,6 +513,6 @@
   }
 
   window.YD.game = {
-    mount: function (el) { root = el; st = load(); if (st && st.done) st = null; render(); }
+    mount: function (el) { root = el; busy = false; st = load(); if (st && st.done) st = null; render(); }
   };
 })();

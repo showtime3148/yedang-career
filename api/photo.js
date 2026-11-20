@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   const k = String((req.query && req.query.k) || "");
   if (!/^[a-z0-9-]{2,40}$/.test(k)) { res.status(400).end("bad key"); return; }
   try {
-    const r = await get("photos/" + k + ".jpg", { access: "private" });
+    const r = await get("photos/" + k + ".jpg", { access: "private", useCache: false });
     if (!r || r.statusCode !== 200) { res.status(404).end("not found"); return; }
     const buf = Buffer.from(await new Response(r.stream).arrayBuffer());
     res.setHeader("Content-Type", "image/jpeg");

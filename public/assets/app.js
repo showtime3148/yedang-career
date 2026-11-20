@@ -134,7 +134,7 @@
     return '<div class="changes">' + ADM.changes.map(function (c) { return "<div><b>" + esc(c.t) + "</b><p>" + esc(c.d) + "</p></div>"; }).join("") + "</div>";
   }
   function ctaBand(fieldId) {
-    return '<section class="cta-band"><div class="wrap"><div style="flex:1 1 420px"><h2>결과를 들고 선생님과 직접 이야기해 보세요</h2><p>12월부터 2월까지 평일 오후와 토요일 오전, 30분 개인 상담. 부모님과 함께 오시면 학부모 상담도 이어서 진행합니다.</p></div><a class="btn btn-primary" href="#/booking' + (fieldId ? "?f=" + fieldId : "") + '">개인 상담 신청</a></div></section>';
+    return '<section class="cta-band"><div class="wrap"><div style="flex:1 1 420px"><h2>결과를 들고 선생님과 직접 이야기해 보세요</h2><p>12월부터 2월까지 평일 오후와 토요일 오전에 개인 상담을 합니다. 부모님과 함께 오시면 학부모 상담도 이어서 진행합니다.</p></div><a class="btn btn-primary" href="#/booking' + (fieldId ? "?f=" + fieldId : "") + '">개인 상담 신청</a></div></section>';
   }
 
   /* ───── 처음 화면 ───── */
@@ -303,7 +303,7 @@
       '<section class="sec"><h2>갈 수 있는 대학과 전형</h2><p class="note">2028학년도 대입 기준의 큰 방향이에요.</p>' + admHTML(f) + "</section>" +
       "</div>" +
       '<aside class="r-side">' +
-      '<div class="side-card cta"><h3>이 진로로 상담받기</h3><p>결과를 보며 선생님과 30분 개인 상담. 부모님과 함께 오시면 학부모 상담도 이어서 해요.</p><a class="btn btn-sprout" href="#/booking?f=' + f.id + (q ? "&q=" + encodeURIComponent(q) : "") + '">개인 상담 신청</a></div>' +
+      '<div class="side-card cta"><h3>이 진로로 상담받기</h3><p>결과를 보며 선생님과 개인 상담. 부모님과 함께 오시면 학부모 상담도 이어서 해요.</p><a class="btn btn-sprout" href="#/booking?f=' + f.id + (q ? "&q=" + encodeURIComponent(q) : "") + '">개인 상담 신청</a></div>' +
       '<div class="side-card"><h3>예당고에서는</h3><p class="yd">' + esc(f.yedang) + "</p></div>" +
       '<div class="side-card"><h3>다른 분야도 보기</h3><p>' + FIELDS.filter(function (x) { return x.group === f.group && x.id !== f.id; }).map(function (x) { return '<a href="#/f/' + x.id + '/1">' + x.emoji + " " + esc(x.name) + "</a>"; }).join("<br>") + "</p></div>" +
       "</aside></div>" + ctaBand(f.id);
@@ -395,9 +395,9 @@
     main.innerHTML =
       '<div class="narrow page-head"><h1>개인 진로 상담 신청</h1><p>진로 내비 결과를 바탕으로 예당고 선생님과 1:1로 이야기합니다. 부모님과 함께 오시면 학생 상담에 이어 학부모 상담도 진행해요. 장소는 예당고등학교(' + esc(SCHOOL.location) + ")입니다.</p></div>" +
       '<div class="narrow steps">' +
-      '<section class="step" id="s1"><h2><span class="n">1</span>누가 오시나요?</h2><p class="hint">상담 방식에 따라 시간이 달라요.</p><div class="step-body"><div class="types" role="radiogroup" aria-label="상담 방식">' +
-      '<button class="type" role="radio" aria-checked="false" data-type="student"><b>학생 혼자</b><span>학생 진로·과목 선택·학교생활 상담</span><span class="min">30분</span></button>' +
-      '<button class="type" role="radio" aria-checked="false" data-type="family"><b>부모님과 함께</b><span>학생 상담 30분 + 학부모 상담 30분 (입학·기숙사·IB·대입 안내 포함)</span><span class="min">60분</span></button>' +
+      '<section class="step" id="s1"><h2><span class="n">1</span>누가 오시나요?</h2><p class="hint">상담 방식을 골라 주세요.</p><div class="step-body"><div class="types" role="radiogroup" aria-label="상담 방식">' +
+      '<button class="type" role="radio" aria-checked="false" data-type="student"><b>학생 혼자</b><span>학생 진로·과목 선택·학교생활 상담</span></button>' +
+      '<button class="type" role="radio" aria-checked="false" data-type="family"><b>부모님과 함께</b><span>학생 상담에 이어 학부모 상담 (입학·기숙사·IB·대입 안내 포함)</span></button>' +
       "</div></div></section>" +
       '<section class="step locked" id="s2"><h2><span class="n">2</span>날짜와 시간 고르기</h2><p class="hint">12월~2월 평일 16:00~18:00, 토요일 10:00~12:00. 공휴일은 쉽니다.</p><div class="step-body" id="calBox"><p class="empty-box">상담 방식을 먼저 골라 주세요.</p></div></section>' +
       '<section class="step locked" id="s3"><h2><span class="n">3</span>신청 정보</h2><p class="hint">상담 전날 확인 연락을 드립니다.</p><div class="step-body">' +
@@ -468,7 +468,7 @@
         html += '<button type="button" class="day" data-d="' + d.date + '"' + (n ? "" : " disabled") + ' aria-pressed="' + (d.date === st.date) + '" aria-label="' + fmtDate(d.date) + " " + (label || "상담 없음") + '">' + (+d.date.slice(8)) + "<small>" + shown + "</small></button>";
       });
       html += "</div>";
-      html += '<div id="timeBox"></div><div class="legend"><span>숫자는 선택할 수 있는 시간 수예요.</span>' + (st.type === "family" ? "<span>부모님 동반 상담은 이어지는 두 칸(60분)이 비어 있어야 해요.</span>" : "") + "</div>";
+      html += '<div id="timeBox"></div><div class="legend"><span>숫자는 선택할 수 있는 시간 수예요.</span>' + (st.type === "family" ? "<span>부모님과 함께 오시는 상담은 바로 다음 시간도 비어 있어야 선택할 수 있어요.</span>" : "") + "</div>";
       $("#calBox").innerHTML = html;
       $$(".months button").forEach(function (b) { b.onclick = function () { st.month = b.dataset.m; st.date = null; st.time = null; renderCal(); lockForm(); }; });
       $$(".day[data-d]").forEach(function (b) { b.onclick = function () { st.date = b.dataset.d; st.time = null; renderCal(); lockForm(); }; });
@@ -478,11 +478,10 @@
       var box = $("#timeBox"); if (!box) return;
       if (!st.date) { box.innerHTML = ""; return; }
       var day = st.avail.days.find(function (d) { return d.date === st.date; });
-      var mins = st.type === "family" ? 60 : 30;
       box.innerHTML = '<div class="times" role="group" aria-label="' + fmtDate(st.date) + ' 시간">' + slotsOf(day).map(function (s) {
-        var why = s.status === "taken" ? "예약됨" : s.status === "blocked" ? "상담 없음" : s.status === "past" ? "지난 시간" : !s.ok ? "60분 불가" : "~" + addMin(s.time, mins);
+        var why = s.status === "taken" ? "예약됨" : s.status === "blocked" ? "상담 없음" : s.status === "past" ? "지난 시간" : !s.ok ? "선택 불가" : "가능";
         return '<button type="button" class="time" data-t="' + s.time + '"' + (s.ok ? "" : " disabled") + ' aria-pressed="' + (s.time === st.time) + '">' + s.time + "<small>" + why + "</small></button>";
-      }).join("") + "</div>" + (st.time ? '<p class="picked">' + fmtDate(st.date) + " " + st.time + "~" + addMin(st.time, mins) + " (" + mins + "분)</p>" : "");
+      }).join("") + "</div>" + (st.time ? '<p class="picked">' + fmtDate(st.date) + " " + st.time + " 시작</p>" : "");
       $$(".time", box).forEach(function (b) { b.onclick = function () { st.time = b.dataset.t; renderTimes(); lockForm(); if (b.dataset.t) setTimeout(function () { $("#s3").scrollIntoView({ behavior: "smooth", block: "start" }); }, 120); }; });
     }
     function lockForm() { $("#s3").classList.toggle("locked", !(st.type && st.date && st.time)); }
@@ -523,11 +522,11 @@
       var last4 = (body.studentPhone || body.parentPhone).replace(/\D/g, "").slice(-4);
       $(".steps").innerHTML = '<div class="done" role="status"><h2>상담 신청이 접수됐어요</h2><p>선생님이 확인한 뒤 연락드립니다. 예약번호를 꼭 적어 두세요.</p>' +
         '<div class="code">' + esc(d.id) + "</div>" +
-        "<dl><dt>상담 방식</dt><dd>" + esc(d.typeLabel) + " (" + d.minutes + "분)</dd><dt>일시</dt><dd>" + fmtDate(d.date) + " " + esc(d.time) + "~" + addMin(d.time, d.minutes) + "</dd><dt>장소</dt><dd>예당고등학교</dd><dt>학생</dt><dd>" + esc(body.studentName) + " (" + esc(body.school) + ")</dd></dl>" +
+        "<dl><dt>상담 방식</dt><dd>" + esc(d.typeLabel) + "</dd><dt>일시</dt><dd>" + fmtDate(d.date) + " " + esc(d.time) + "</dd><dt>장소</dt><dd>예당고등학교</dd><dt>학생</dt><dd>" + esc(body.studentName) + " (" + esc(body.school) + ")</dd></dl>" +
         '<p>날짜를 바꾸거나 취소하려면 <a style="color:#C9EA6A" href="#/check?id=' + esc(d.id) + '">예약 확인</a>에서 예약번호와 전화번호 뒤 4자리(' + esc(last4) + ")를 입력하세요.</p>" +
         '<div class="submit-row"><button class="btn btn-sprout" id="doneShot">예약 내용 저장</button><a class="btn btn-ghost" style="color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35)" href="#/">처음으로</a></div></div>';
       $("#doneShot").onclick = function () {
-        download(["예당고 개인 진로 상담 예약", "예약번호: " + d.id, "상담 방식: " + d.typeLabel + " (" + d.minutes + "분)", "일시: " + fmtDate(d.date) + " " + d.time + "~" + addMin(d.time, d.minutes), "장소: 예당고등학교 (" + SCHOOL.location + ")", "학생: " + body.studentName + " (" + body.school + ")", "예약 확인·취소: " + location.origin + "/#/check?id=" + d.id].join("\n"), "예당고_상담예약_" + d.id + ".txt", "text/plain");
+        download(["예당고 개인 진로 상담 예약", "예약번호: " + d.id, "상담 방식: " + d.typeLabel, "일시: " + fmtDate(d.date) + " " + d.time, "장소: 예당고등학교 (" + SCHOOL.location + ")", "학생: " + body.studentName + " (" + body.school + ")", "예약 확인·취소: " + location.origin + "/#/check?id=" + d.id].join("\n"), "예당고_상담예약_" + d.id + ".txt", "text/plain");
       };
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -553,7 +552,7 @@
           if (!res.ok) { $("#ckErr").textContent = res.d.error || "찾지 못했어요."; $("#ckResult").innerHTML = ""; return; }
           var b = res.d.booking, canCancel = b.status === "requested" || b.status === "confirmed";
           $("#ckResult").innerHTML = '<section class="step"><h2 style="justify-content:space-between">' + esc(b.id) + ' <span class="status st-' + b.status + '">' + STATUS[b.status] + "</span></h2>" +
-            '<dl style="display:grid;grid-template-columns:max-content 1fr;gap:8px 18px;margin:14px 0 0"><dt>상담 방식</dt><dd style="margin:0">' + esc(b.typeLabel) + " (" + b.minutes + "분)</dd><dt>일시</dt><dd style=\"margin:0\">" + fmtDate(b.date) + " " + esc(b.time) + "~" + addMin(b.time, b.minutes) + '</dd><dt>학생</dt><dd style="margin:0">' + esc(b.studentName) + " (" + esc(b.school) + ")</dd></dl>" +
+            '<dl style="display:grid;grid-template-columns:max-content 1fr;gap:8px 18px;margin:14px 0 0"><dt>상담 방식</dt><dd style="margin:0">' + esc(b.typeLabel) + "</dd><dt>일시</dt><dd style=\"margin:0\">" + fmtDate(b.date) + " " + esc(b.time) + '</dd><dt>학생</dt><dd style="margin:0">' + esc(b.studentName) + " (" + esc(b.school) + ")</dd></dl>" +
             (canCancel ? '<div class="submit-row" id="cxRow"><button class="btn btn-ghost" id="cxBtn">이 예약 취소하기</button><span class="hint" style="color:var(--muted);font-size:14px">시간을 바꾸려면 취소한 뒤 다시 신청하세요.</span></div>' : "") + "</section>";
           var cx = $("#cxBtn");
           if (cx) cx.onclick = function () {

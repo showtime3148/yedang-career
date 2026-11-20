@@ -32,7 +32,7 @@ export default async function handler(req, res) {
   if (!b.agree) return send(res, 400, { error: "개인정보 수집·이용에 동의해 주세요." });
 
   const times = slotsNeeded(date, time, type);
-  if (!times) return send(res, 400, { error: type === "family" ? "학부모 동반 상담(60분)은 이어지는 두 시간대가 필요합니다. 다른 시간을 골라 주세요." : "선택할 수 없는 시간입니다." });
+  if (!times) return send(res, 400, { error: type === "family" ? "부모님과 함께 오시는 상담은 바로 다음 시간도 비어 있어야 합니다. 다른 시간을 골라 주세요." : "선택할 수 없는 시간입니다." });
   if (isTooSoon(date, times[0])) return send(res, 400, { error: "지금부터 3시간 이후의 시간만 예약할 수 있습니다." });
 
   try {

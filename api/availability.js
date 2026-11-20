@@ -26,7 +26,9 @@ export default async function handler(req, res) {
         })
       };
     });
-    send(res, 200, { range: [RANGE_START, RANGE_END], types: TYPES, days });
+    // 여러 학생이 동시에 열어도 저장소 목록 조회는 20초에 한 번 정도만 일어나도록 CDN에 잠깐 캐시
+    res.setHeader("Cache-Control", "public, s-maxage=20, stale-while-revalidate=40");
+    res.status(200).json({ range: [RANGE_START, RANGE_END], types: TYPES, days });
   } catch (e) {
     console.error(e);
     send(res, 500, { error: "일정을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요." });

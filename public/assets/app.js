@@ -153,7 +153,7 @@
     return '<div class="changes">' + ADM.changes.map(function (c) { return "<div><b>" + esc(c.t) + "</b><p>" + esc(c.d) + "</p></div>"; }).join("") + "</div>";
   }
   function ctaBand(fieldId) {
-    return '<section class="cta-band"><div class="wrap"><div style="flex:1 1 420px"><h2>결과를 들고 선생님과 직접 이야기해 보세요</h2><p>12월부터 2월까지 평일 오후와 토요일 오전에 개인 상담을 합니다. 부모님과 함께 오시면 학부모 상담도 이어서 진행합니다.</p></div><a class="btn btn-primary" href="#/booking' + (fieldId ? "?f=" + fieldId : "") + '">개인 상담 신청</a></div></section>';
+    return '<section class="cta-band"><div class="wrap"><div style="flex:1 1 420px"><h2>결과를 들고 선생님과 직접 이야기해 보세요</h2><p>12월부터 2월까지 평일 오후와 토요일 오전에 개인 상담을 합니다. 부모님과 함께 오시면 학부모 상담도 이어서 진행합니다. 상담을 끝까지 받은 학생은 추첨으로 문화상품권을 드려요.</p></div><a class="btn btn-primary" href="#/booking' + (fieldId ? "?f=" + fieldId : "") + '">개인 상담 신청</a></div></section>';
   }
 
   /* ───── 처음 화면 ───── */
@@ -227,7 +227,7 @@
   }
   function gameBand() {
     var last = store("yd_game_last"), f = last && FIELD[last.field];
-    return '<section class="game-band"><div class="wrap"><div class="gb-steps" aria-hidden="true">' + ["1-1", "1-2", "2-1", "2-2", "3-1", "3-2"].map(function (x, i) { return '<span style="--i:' + i + '">' + x + "</span>"; }).join("") + '</div><div class="gb-txt"><h2>게임으로 미리 살아 보는 예당고 3년</h2><p>6학기 동안 동아리, 탐구, 봉사, 공부, 휴식 가운데 무엇을 할지 골라 보세요. 졸업할 때 나에게 맞는 진로가 나타나요.' + (f ? " 지난번 결과는 " + f.emoji + " " + esc(f.name) + "였어요." : "") + '</p><a class="btn btn-sprout" href="#/game">' + (f ? "다시 도전하기" : "게임 시작") + "</a></div></div></section>";
+    return '<section class="game-band"><div class="wrap"><div class="gb-steps" aria-hidden="true">' + ["1-1", "1-2", "2-1", "2-2", "3-1", "3-2"].map(function (x, i) { return '<span style="--i:' + i + '">' + x + "</span>"; }).join("") + '</div><div class="gb-txt"><h2>게임으로 미리 살아 보는 예당고 3년</h2><p>6학기 동안 동아리, 탐구, 봉사, 공부, 휴식 가운데 무엇을 할지 골라 보세요. 졸업할 때 나에게 맞는 진로가 나타나요. 끝까지 졸업하면 완주 기념품과 문화상품권 추첨이 기다려요!' + (f ? " 지난번 결과는 " + f.emoji + " " + esc(f.name) + "였어요." : "") + '</p><a class="btn btn-sprout" href="#/game">' + (f ? "다시 도전하기" : "게임 시작") + "</a></div></div></section>";
   }
 
   /* ───── 시설 둘러보기 ───── */
@@ -477,7 +477,7 @@
     var id = identity() || {};
     var st = { type: null, month: null, date: null, time: null, avail: null };
     main.innerHTML =
-      '<div class="narrow page-head"><h1>개인 진로 상담 신청</h1><p>진로 내비 결과를 바탕으로 예당고 선생님과 1:1로 이야기합니다. 부모님과 함께 오시면 학생 상담에 이어 학부모 상담도 진행해요. 장소는 예당고등학교(' + esc(SCHOOL.location) + ")입니다.</p></div>" +
+      '<div class="narrow page-head"><h1>개인 진로 상담 신청</h1><p>진로 내비 결과를 바탕으로 예당고 선생님과 1:1로 이야기합니다. 부모님과 함께 오시면 학생 상담에 이어 학부모 상담도 진행해요. 장소는 예당고등학교(' + esc(SCHOOL.location) + ")입니다.</p><p class=\"prize-note\"><b>상담 이벤트</b> 상담을 끝까지 받은 학생 중 추첨해 문화상품권을 드려요.</p></div>" +
       '<div class="narrow steps">' +
       '<section class="step" id="s1"><h2><span class="n">1</span>누가 오시나요?</h2><p class="hint">상담 방식을 골라 주세요.</p><div class="step-body"><div class="types" role="radiogroup" aria-label="상담 방식">' +
       '<button class="type" role="radio" aria-checked="false" data-type="student"><b>학생 혼자</b><span>학생 진로·과목 선택·학교생활 상담</span></button>' +
@@ -519,7 +519,7 @@
     function loadCal() {
       if (st.avail) return renderCal();
       $("#calBox").innerHTML = '<p class="empty-box">상담 가능한 시간을 불러오는 중…</p>';
-      fetch("/api/availability").then(function (r) { return r.json(); }).then(function (d) {
+      fetch("/api/availability" + (st.fresh ? "?t=" + Date.now() : "")).then(function (r) { return r.json(); }).then(function (d) {
         if (!d.days) throw new Error(d.error || "");
         st.avail = d; renderCal();
       }).catch(function (e) {
@@ -594,7 +594,7 @@
           if (!res.ok) {
             err.textContent = res.d.error || "신청하지 못했어요.";
             btn.disabled = false; btn.textContent = "상담 신청하기";
-            if (res.status === 409) { st.avail = null; st.time = null; loadCal(); lockForm(); }
+            if (res.status === 409) { st.avail = null; st.time = null; st.fresh = true; loadCal(); lockForm(); }
             return;
           }
           var mine = store("yd_bookings") || []; mine.unshift({ id: res.d.id, date: res.d.date, time: res.d.time }); store("yd_bookings", mine.slice(0, 20));
@@ -607,7 +607,7 @@
       $(".steps").innerHTML = '<div class="done" role="status"><h2>상담 신청이 접수됐어요</h2><p>선생님이 확인한 뒤 연락드립니다. 예약번호를 꼭 적어 두세요.</p>' +
         '<div class="code">' + esc(d.id) + "</div>" +
         "<dl><dt>상담 방식</dt><dd>" + esc(d.typeLabel) + "</dd><dt>일시</dt><dd>" + fmtDate(d.date) + " " + esc(d.time) + "</dd><dt>장소</dt><dd>예당고등학교</dd><dt>학생</dt><dd>" + esc(body.studentName) + " (" + esc(body.school) + ")</dd></dl>" +
-        '<p>날짜를 바꾸거나 취소하려면 <a style="color:#C9EA6A" href="#/check?id=' + esc(d.id) + '">예약 확인</a>에서 예약번호와 전화번호 뒤 4자리(' + esc(last4) + ")를 입력하세요.</p>" +
+        '<p><b style="color:#C9EA6A">상담 이벤트</b> 상담을 끝까지 받으면 추첨으로 문화상품권을 드려요.</p><p>날짜를 바꾸거나 취소하려면 <a style="color:#C9EA6A" href="#/check?id=' + esc(d.id) + '">예약 확인</a>에서 예약번호와 전화번호 뒤 4자리(' + esc(last4) + ")를 입력하세요.</p>" +
         '<div class="submit-row"><button class="btn btn-sprout" id="doneShot">예약 내용 저장</button><a class="btn btn-ghost" style="color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35)" href="#/">처음으로</a></div></div>';
       $("#doneShot").onclick = function () {
         download(["예당고 개인 진로 상담 예약", "예약번호: " + d.id, "상담 방식: " + d.typeLabel, "일시: " + fmtDate(d.date) + " " + d.time, "장소: 예당고등학교 (" + SCHOOL.location + ")", "학생: " + body.studentName + " (" + body.school + ")", "예약 확인·취소: " + location.origin + "/#/check?id=" + d.id].join("\n"), "예당고_상담예약_" + d.id + ".txt", "text/plain");

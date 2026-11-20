@@ -97,9 +97,98 @@
   ];
   function cnt(s, ids) { return s.log.filter(function (l) { return ids.indexOf(l) >= 0; }).length; }
 
+  /* ───── 학교 지도와 캐릭터 ───── */
+  // 지도 위 장소 (x, y 는 지도 1000×300 기준)
+  var NODES = {
+    gate: { x: 70, y: 250, n: "정문" }, village: { x: 95, y: 95, n: "득량 마을" }, field: { x: 210, y: 215, n: "운동장" },
+    gym: { x: 300, y: 92, n: "진은관" }, classroom: { x: 445, y: 92, n: "본관 교실" }, maker: { x: 420, y: 238, n: "무한상상실" },
+    ai: { x: 575, y: 150, n: "AI실·2030 아고라" }, art: { x: 625, y: 250, n: "음악·미술실" }, lab: { x: 700, y: 82, n: "과학실" },
+    library: { x: 790, y: 190, n: "도서관 혜윰" }, dorm: { x: 890, y: 82, n: "심경학사" }, track: { x: 935, y: 245, n: "맨발 트랙" }
+  };
+  var LOC = { lib: "library", dadok: "library", write: "library", cafe: "library", ee: "library", pi: "classroom", mentor: "classroom", english: "classroom", night: "classroom", mind: "classroom", council: "classroom", lead: "classroom", portfolio: "classroom",
+    lab: "lab", onetamgu: "lab", rne: "lab", hanlim: "lab", star: "field", festival: "field", dal: "maker", fab: "maker", robit: "ai", aikkum: "ai", vibe: "ai", indie: "ai", debate: "ai",
+    frame: "art", aimusic: "art", draw: "art", vivid: "art", futsal: "gym", league: "gym", golf: "gym", donghaeng: "village", eco: "village", jayul: "dorm", jeongdok: "dorm", dorm: "dorm", rest: "track" };
+  var COLORS = [{ c: "#2C7350", n: "차잎 초록" }, { c: "#2B4C9A", n: "바다 파랑" }, { c: "#E0782A", n: "노을 주황" }, { c: "#B0457E", n: "동백 분홍" }];
+  function charSVG(color) {
+    return '<svg viewBox="0 0 60 92" aria-hidden="true"><g class="ch-body">' +
+      '<ellipse cx="30" cy="89" rx="14" ry="3" fill="rgba(0,0,0,.18)"/>' +
+      '<g class="ch-leg l"><rect x="22" y="64" width="7" height="20" rx="3.5" fill="#26313B"/><ellipse cx="25" cy="85" rx="5.5" ry="3" fill="#1B232B"/></g>' +
+      '<g class="ch-leg r"><rect x="31" y="64" width="7" height="20" rx="3.5" fill="#26313B"/><ellipse cx="35" cy="85" rx="5.5" ry="3" fill="#1B232B"/></g>' +
+      '<rect x="12" y="44" width="10" height="20" rx="5" fill="' + color + '" opacity=".75"/>' +
+      '<g class="ch-arm l"><rect x="13" y="45" width="6" height="18" rx="3" fill="' + color + '"/><circle cx="16" cy="64" r="3.2" fill="#F3CDA8"/></g>' +
+      '<rect x="18" y="41" width="24" height="27" rx="10" fill="' + color + '"/>' +
+      '<path d="M26 41 L30 49 L34 41" fill="#fff"/><rect x="29" y="47" width="2" height="9" rx="1" fill="#C9EA6A"/>' +
+      '<g class="ch-arm r"><rect x="41" y="45" width="6" height="18" rx="3" fill="' + color + '"/><circle cx="44" cy="64" r="3.2" fill="#F3CDA8"/></g>' +
+      '<circle cx="30" cy="25" r="16" fill="#F6D7B8"/>' +
+      '<path d="M14 24 C14 12 22 8 30 8 C39 8 46 13 46 24 C42 18 36 16 30 17 C24 16 18 19 14 24 Z" fill="#2A2522"/>' +
+      '<circle cx="24.5" cy="27" r="2" fill="#2A2522"/><circle cx="35.5" cy="27" r="2" fill="#2A2522"/>' +
+      '<circle cx="21" cy="32" r="2.6" fill="#F4A9A0" opacity=".7"/><circle cx="39" cy="32" r="2.6" fill="#F4A9A0" opacity=".7"/>' +
+      '<path d="M26.5 32.5 Q30 35.5 33.5 32.5" stroke="#2A2522" stroke-width="1.6" fill="none" stroke-linecap="round"/>' +
+      '<g class="ch-sprout"><path d="M30 9 C30 5 30 3 30 1" stroke="#3F8F4E" stroke-width="2" stroke-linecap="round"/>' +
+      '<path d="M30 3 C24 -2 18 1 19 5 C23 7 27 6 30 3 Z" fill="#7BC24F"/><path d="M30 3 C36 -2 42 1 41 5 C37 7 33 6 30 3 Z" fill="#9AD65A"/></g>' +
+      "</g></svg>";
+  }
+  function mapSVG() {
+    var B = function (x, y, w, h, roof, label, id) {
+      return '<g class="mp-b" data-node="' + id + '"><rect x="' + (x - w / 2) + '" y="' + (y - h) + '" width="' + w + '" height="' + h + '" rx="6" fill="#FFFFFF" stroke="#C9D3C8"/>' +
+        '<rect x="' + (x - w / 2 - 4) + '" y="' + (y - h - 8) + '" width="' + (w + 8) + '" height="12" rx="4" fill="' + roof + '"/>' +
+        Array.from({ length: Math.max(2, Math.floor(w / 22)) }).map(function (_, i, a) { var wx = x - w / 2 + 8 + i * ((w - 16) / a.length); return '<rect x="' + wx + '" y="' + (y - h + 12) + '" width="' + ((w - 16) / a.length - 5) + '" height="9" rx="2" fill="#DCEBDD"/>'; }).join("") +
+        '<text x="' + x + '" y="' + (y + 16) + '" text-anchor="middle" font-size="13" font-weight="700" fill="#143A2B">' + label + "</text></g>";
+    };
+    var path = Object.keys(NODES).map(function (k) { return NODES[k]; });
+    return '<svg class="mp" viewBox="0 0 1000 300" preserveAspectRatio="xMidYMid meet" aria-hidden="true">' +
+      '<rect width="1000" height="300" rx="18" fill="#E8F1E3"/>' +
+      '<path d="M0 40 C120 20 220 60 330 30 S560 10 700 35 S900 15 1000 30" stroke="#CFE3C4" stroke-width="16" fill="none"/>' +
+      '<path d="M0 70 C140 50 240 90 360 60 S600 40 740 64 S920 45 1000 60" stroke="#D8EACD" stroke-width="12" fill="none"/>' +
+      '<path d="M70 250 C150 240 180 210 210 215 S280 120 300 100 S380 100 445 100 S540 150 575 150 S650 90 700 90 S760 190 790 190 S860 90 890 90 S930 220 935 245 M210 215 C300 240 380 240 420 240 S560 250 625 250 S760 210 790 195 M95 100 C120 160 170 200 210 215" stroke="#F3E6C8" stroke-width="10" stroke-linecap="round" fill="none"/>' +
+      '<ellipse cx="210" cy="222" rx="80" ry="34" fill="#BFDDB0"/><rect x="160" y="210" width="100" height="22" rx="11" fill="none" stroke="#FFFFFF" stroke-width="2"/>' +
+      '<ellipse cx="935" cy="252" rx="52" ry="16" fill="none" stroke="#E5C894" stroke-width="7"/>' +
+      '<g fill="#7FB88F"><circle cx="40" cy="180" r="13"/><circle cx="160" cy="70" r="11"/><circle cx="520" cy="60" r="12"/><circle cx="850" cy="160" r="12"/><circle cx="980" cy="160" r="10"/><circle cx="350" cy="250" r="10"/></g>' +
+      '<g fill="#2C7350"><path d="M75 100 l20 -24 l20 24 z"/><rect x="80" y="100" width="30" height="20" fill="#FFFFFF" stroke="#C9D3C8"/></g><text x="95" y="136" text-anchor="middle" font-size="13" font-weight="700" fill="#143A2B">득량 마을</text>' +
+      '<g><rect x="52" y="232" width="8" height="26" fill="#143A2B"/><rect x="82" y="232" width="8" height="26" fill="#143A2B"/><rect x="48" y="226" width="46" height="9" rx="3" fill="#143A2B"/></g><text x="71" y="276" text-anchor="middle" font-size="13" font-weight="700" fill="#143A2B">정문</text>' +
+      B(300, 100, 88, 52, "#E07B1F", "진은관", "gym") + B(445, 100, 110, 62, "#143A2B", "본관 교실", "classroom") + B(575, 158, 96, 50, "#2D6FD6", "AI실·2030 아고라", "ai") +
+      B(700, 90, 84, 52, "#6B55D9", "과학실", "lab") + B(790, 198, 92, 48, "#1C9B6E", "도서관 혜윰", "library") + B(890, 90, 92, 62, "#0E8E9C", "심경학사", "dorm") +
+      B(420, 246, 84, 40, "#D94F6B", "무한상상실", "maker") + B(625, 258, 84, 40, "#C9428E", "음악·미술실", "art") +
+      '<text x="210" y="262" text-anchor="middle" font-size="13" font-weight="700" fill="#143A2B">운동장</text><text x="935" y="286" text-anchor="middle" font-size="13" font-weight="700" fill="#143A2B">맨발 트랙</text>' +
+      "</svg>";
+  }
+  var walkQ = Promise.resolve();
+  function moveTo(node, say, pop) {
+    walkQ = walkQ.then(function () {
+      return new Promise(function (done) {
+        var el = root && root.querySelector(".ch"); if (!el) return done();
+        var to = NODES[node] || NODES.gate, from = NODES[st.pos] || NODES.gate;
+        var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        el.classList.toggle("flip", to.x < from.x);
+        el.classList.add("walk");
+        el.style.left = (to.x / 10) + "%"; el.style.top = (to.y / 3) + "%";
+        st.pos = node;
+        setTimeout(function () {
+          el.classList.remove("walk");
+          var bub = root.querySelector(".ch-bubble");
+          if (bub && say) { bub.textContent = say; bub.classList.add("on"); clearTimeout(bub._t); bub._t = setTimeout(function () { bub.classList.remove("on"); }, 1800); }
+          if (pop) { var f = document.createElement("span"); f.className = "ch-pop"; f.textContent = pop; f.style.left = el.style.left; f.style.top = el.style.top; el.parentNode.appendChild(f); setTimeout(function () { f.remove(); }, 1400); }
+          done();
+        }, reduce ? 50 : 950);
+      });
+    });
+    return walkQ;
+  }
+  function mapHTML() {
+    var p = NODES[st.pos] || NODES.gate;
+    return '<div class="mp-wrap">' + mapSVG() + '<div class="ch" style="left:' + p.x / 10 + "%;top:" + p.y / 3 + '%"><span class="ch-bubble" role="status"></span>' + charSVG(st.color || COLORS[0].c) + "</div></div>";
+  }
+  function popText(c) {
+    var best = null; STATS.forEach(function (x) { if (c.fx && c.fx[x.k] && (!best || c.fx[x.k] > c.fx[best.k])) best = { k: x.k, n: x.name }; });
+    if (best) return best.n + " +" + c.fx[best.k];
+    if (c.g) return "성적 +" + c.g;
+    if (c.en) return "체력 +" + c.en;
+    return "";
+  }
+
   /* ───── 상태 ───── */
   var KEY = "yd_game_v1", st;
-  function fresh(name) { var o = { name: name || "", sem: 0, st: {}, g: 50, en: 8, log: [], track: null, picked: [], hand: [], done: false, events: [] }; STATS.forEach(function (x) { o.st[x.k] = 1; }); return o; }
+  function fresh(name) { var o = { name: name || "", color: COLORS[0].c, pos: "gate", sem: 0, st: {}, g: 50, en: 8, log: [], track: null, picked: [], hand: [], done: false, events: [] }; STATS.forEach(function (x) { o.st[x.k] = 1; }); return o; }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
   function load() { try { return JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) { return null; } }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
@@ -142,7 +231,7 @@
     if (!st.hand.length) { deal(); save(); }
     var left = 3 - slotsUsed();
     root.innerHTML = hud() +
-      '<section class="g-play"><h2>' + SEM[st.sem] + '<small>이번 학기에 할 일을 골라 주세요. 시간 칸 <b>' + left + "</b>개 남음</small></h2>" +
+      mapHTML() + '<section class="g-play"><h2>' + SEM[st.sem] + '<small>이번 학기에 할 일을 골라 주세요. 시간 칸 <b>' + left + "</b>개 남음</small></h2>" +
       (st.en <= 2 ? '<p class="g-warn">체력이 바닥났어요. 쉬는 활동을 하나 넣어 보세요.</p>' : "") +
       '<div class="g-cards">' + st.hand.map(function (id) {
         var c = card(id), on = st.picked.indexOf(id) >= 0, dis = !on && c.cost > left;
@@ -150,7 +239,12 @@
       }).join("") + "</div>" +
       '<div class="g-actions"><button class="btn btn-primary" id="gNext"' + (st.picked.length ? "" : " disabled") + ">" + (st.sem === 5 ? "졸업하기" : "이번 학기 마치기") + '</button><button class="btn btn-ghost btn-small" id="gReset">처음부터</button></div></section>';
     root.querySelectorAll(".g-card").forEach(function (b) {
-      b.onclick = function () { var id = b.dataset.id, i = st.picked.indexOf(id); if (i >= 0) st.picked.splice(i, 1); else st.picked.push(id); save(); render(); };
+      b.onclick = function () {
+        var id = b.dataset.id, i = st.picked.indexOf(id), c = card(id);
+        if (i >= 0) { st.picked.splice(i, 1); } else { st.picked.push(id); }
+        var keepPos = st.pos; save(); render();
+        if (i < 0) { st.pos = keepPos; moveTo(LOC[id] || "classroom", c.e + " " + NODES[LOC[id] || "classroom"].n + "(으)로!", ""); save(); }
+      };
     });
     root.querySelector("#gNext").onclick = endSemester;
     root.querySelector("#gReset").onclick = function () { st = fresh(st.name); save(); render(); };
@@ -159,12 +253,13 @@
   function renderStart() {
     var id = null; try { id = JSON.parse(sessionStorage.getItem("yd_id") || "null"); } catch (e) {}
     var saved = load();
-    root.innerHTML = '<section class="g-start"><div class="g-start-art" aria-hidden="true">' + SEM.map(function (s, i) { return '<span style="--i:' + i + '">' + s + "</span>"; }).join("") + "</div>" +
+    root.innerHTML = '<section class="g-start"><div class="g-start-art" aria-hidden="true"><div class="g-start-ch">' + charSVG(COLORS[0].c) + '</div>' + SEM.map(function (s, i) { return '<span style="--i:' + i + '">' + s + "</span>"; }).join("") + "</div>" +
       '<div><h2>예당고 3년, 미리 살아 보기</h2><p>2027년 3월, 예당고에 입학했어요. 6학기 동안 동아리·탐구·봉사·공부·휴식 가운데 무엇을 할지 고르세요. 고른 활동이 쌓여 졸업할 때 나에게 맞는 진로가 나타납니다.</p>' +
       '<ul class="g-rules"><li>학기마다 시간 칸 3개를 씁니다.</li><li>활동마다 만들기·탐구·표현·소통·도전·꼼꼼 능력치가 오릅니다.</li><li>공부를 안 하면 성적이, 쉬지 않으면 체력이 떨어져요.</li></ul>' +
-      '<form id="gStart" class="g-form"><label for="gName">이름</label><div class="g-row"><input id="gName" maxlength="12" placeholder="이름 또는 별명" value="' + esc((id && id.name) || "") + '"><button class="btn btn-primary" type="submit">입학하기</button></div></form>' +
+      '<div class="g-prize"><b>끝까지 졸업하면 상품이 있어요!</b><span>완주 기념품을 드리고, 응모한 학생 중 추첨해 문화상품권도 드려요.</span></div>' +
+      '<form id="gStart" class="g-form"><fieldset class="g-colors"><legend>내 캐릭터 고르기</legend><div class="g-color-row">' + COLORS.map(function (c, i) { return '<label class="g-color"><input type="radio" name="gColor" value="' + c.c + '"' + (i === 0 ? " checked" : "") + '><span class="g-color-ch">' + charSVG(c.c) + "</span><em>" + c.n + "</em></label>"; }).join("") + '</div></fieldset><label for="gName">이름</label><div class="g-row"><input id="gName" maxlength="12" placeholder="이름 또는 별명" value="' + esc((id && id.name) || "") + '"><button class="btn btn-primary" type="submit">입학하기</button></div></form>' +
       (saved && saved.name && !saved.done ? '<button class="btn btn-ghost btn-small" id="gCont">' + esc(saved.name) + " 학생, " + SEM[saved.sem] + "부터 이어 하기</button>" : "") + "</div></section>";
-    root.querySelector("#gStart").onsubmit = function (e) { e.preventDefault(); var n = root.querySelector("#gName").value.trim() || "예당이"; st = fresh(n); deal(); save(); render(); };
+    root.querySelector("#gStart").onsubmit = function (e) { e.preventDefault(); var n = root.querySelector("#gName").value.trim() || "예당이"; st = fresh(n); var col = root.querySelector('input[name="gColor"]:checked'); if (col) st.color = col.value; deal(); save(); render(); setTimeout(function () { moveTo("classroom", "입학 첫날! 본관으로 가 볼까?", ""); save(); }, 300); };
     var c = root.querySelector("#gCont"); if (c) c.onclick = function () { st = saved; render(); };
   }
 
@@ -175,6 +270,12 @@
   }
 
   function endSemester() {
+    var btn = root.querySelector("#gNext"); if (btn) btn.disabled = true;
+    root.querySelectorAll(".g-card").forEach(function (b) { b.disabled = true; });
+    st.picked.forEach(function (id) { var c = card(id); moveTo(LOC[id] || "classroom", c.e + " " + c.n, popText(c)); });
+    walkQ.then(function () { return new Promise(function (r) { setTimeout(r, 500); }); }).then(finishSemester);
+  }
+  function finishSemester() {
     st.picked.forEach(function (id) { var c = card(id); apply(c.fx, c.g, c.en); st.log.push(id); });
     st.g = clamp(st.g + (st.en <= 1 ? -3 : 0) - 1, 0, 100); // 시간이 지나면 성적은 조금씩 내려가요(복습 필요)
     st.en = clamp(st.en + 1, 0, 10);
@@ -225,17 +326,54 @@
     root.innerHTML = '<section class="g-end"><div class="g-end-head"><div><p class="g-ev-k">' + esc(st.name) + ' 학생의 예당고 3년</p><h2>졸업을 축하해요!</h2><p>' + esc(top2[0].name) + "과 " + esc(top2[1].name) + " 능력이 가장 많이 자랐어요. 이 모양과 가장 닮은 진로는</p>" +
       '<div class="g-best"><span aria-hidden="true">' + best.emoji + "</span><b>" + esc(best.name) + "</b></div><p class=\"g-sub\">" + esc(best.tagline) + "</p>" +
       '<div class="g-end-btns"><a class="btn btn-sprout" href="#/f/' + best.id + '/1">이 진로 로드맵 보기</a><a class="btn btn-ghost g-light" href="#/booking?f=' + best.id + '">이 결과로 상담 신청</a></div></div>' +
-      '<div class="g-radar">' + radar() + "</div></div>" +
+      '<div class="g-radar"><div class="g-end-ch">' + charSVG(st.color || COLORS[0].c) + "</div>" + radar() + "</div></div>" +
       '<div class="g-end-body"><div><h3>이런 진로도 어울려요</h3><ul class="g-alts">' + alts.map(function (f) { return '<li><a href="#/f/' + f.id + '/1">' + f.emoji + " " + esc(f.name) + "</a></li>"; }).join("") + "</ul>" +
       "<h3>얻은 배지</h3>" + (badges.length ? '<ul class="g-badges">' + badges.map(function (b) { return "<li><b>" + esc(b.n) + "</b><span>" + esc(b.d) + "</span></li>"; }).join("") + "</ul>" : '<p class="g-muted">이번엔 배지가 없어요. 다른 활동 조합으로 다시 도전해 보세요.</p>') +
       "<p class=\"g-muted\">최종 성적: " + gradeLabel(st.g) + " · 2학년 과목: " + esc(st.track || "-") + "</p></div>" +
       '<div><h3>내 생활기록부에 남을 이야기</h3><ul class="ul">' + acts.slice(-8).map(function (t) { return "<li>" + esc(t) + "</li>"; }).join("") + "</ul></div></div>" +
+      prizeHTML(best) +
       '<div class="g-actions"><button class="btn btn-primary" id="gAgain">다른 3년 살아 보기</button><button class="btn btn-ghost" id="gShare">결과 저장</button></div>' +
       '<p class="src">게임 결과는 재미로 보는 참고용이에요. 진짜 진로는 활동을 해 보며 조금씩 찾아가는 거예요.</p></section>';
+    bindPrize(best);
     root.querySelector("#gAgain").onclick = function () { st = fresh(st.name); deal(); save(); render(); window.scrollTo(0, 0); };
     root.querySelector("#gShare").onclick = function () {
       var t = ["예당고 3년 미리 살기 결과", "이름: " + st.name, "추천 진로: " + best.name, "어울리는 진로: " + alts.map(function (f) { return f.name; }).join(", "), "능력치: " + STATS.map(function (x) { return x.name + " " + st.st[x.k]; }).join(", "), "배지: " + (badges.map(function (b) { return b.n; }).join(", ") || "-"), "", "생활기록부 이야기:"].concat(acts.map(function (a) { return "- " + a; })).join("\n");
       var blob = new Blob([t], { type: "text/plain;charset=utf-8" }); var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "예당고_3년미리살기_" + st.name + ".txt"; document.body.appendChild(a); a.click(); setTimeout(function () { a.remove(); }, 200);
+    };
+  }
+
+  /* ───── 완주 상품 ───── */
+  function prizeHTML(best) {
+    var id = null; try { id = JSON.parse(sessionStorage.getItem("yd_id") || "null"); } catch (e) {}
+    var done = null; try { done = JSON.parse(localStorage.getItem("yd_raffle_done") || "null"); } catch (e) {}
+    var d = new Date(), date = d.getFullYear() + "." + (d.getMonth() + 1) + "." + d.getDate();
+    return '<section class="g-prize-end"><div class="g-cert"><p class="g-cert-k">예당고 3년 미리 살기</p><h3>졸업장</h3><p class="g-cert-n">' + esc(st.name) + '</p><p>위 학생은 예당고등학교 6학기를 끝까지 마치고<br>' + esc(best.name) + ' 진로를 발견했기에 이 졸업장을 드립니다.</p><p class="g-cert-d">' + date + ' · 예당고등학교</p></div>' +
+      '<div class="g-prize-box"><h3>졸업 축하 상품</h3><ol class="g-prize-steps"><li><b>완주 기념품</b> 이 졸업장 화면을 신입생 설명회나 개인 상담 때 선생님께 보여 주면 기념품을 드려요.</li><li><b>문화상품권 추첨</b> 아래에서 응모하면 추첨을 통해 문화상품권을 드려요. 당첨되면 적어 준 번호로 연락드려요.</li></ol>' +
+      (done ? '<p class="g-raffle-ok">' + esc(done.name) + ' 학생, 추첨 응모가 완료됐어요. 다시 응모하면 최신 정보로 바뀌어요.</p>' : "") +
+      '<form class="g-raffle" id="gRaffle" novalidate><div class="g-row2"><div class="f"><label for="rfName">이름</label><input id="rfName" maxlength="20" value="' + esc((id && id.name) || st.name) + '"></div><div class="f"><label for="rfSchool">중학교</label><input id="rfSchool" maxlength="30" value="' + esc((id && id.school) || "") + '"></div></div>' +
+      '<div class="f"><label for="rfPhone">휴대폰 번호 (당첨 연락용)</label><input id="rfPhone" inputmode="tel" maxlength="20" placeholder="010-0000-0000" value="' + esc((id && id.phone) || "") + '"></div>' +
+      '<input class="hp" tabindex="-1" autocomplete="off" id="rfWeb" aria-hidden="true">' +
+      '<label class="g-agree"><input type="checkbox" id="rfAgree"> 경품 추첨과 당첨 연락을 위해 이름·학교·휴대폰 번호를 모으는 데 동의해요. (추첨·지급 후 2027년 3월 말까지 파기)</label>' +
+      '<div class="g-actions" style="margin-top:10px"><button class="btn btn-sprout" type="submit">' + (done ? "다시 응모하기" : "추첨 응모하기") + '</button><span class="err" id="rfErr" role="alert"></span></div></form></div></section>';
+  }
+  function bindPrize(best) {
+    var f = root.querySelector("#gRaffle"); if (!f) return;
+    f.onsubmit = function (e) {
+      e.preventDefault();
+      var err = root.querySelector("#rfErr"); err.textContent = "";
+      var body = { name: root.querySelector("#rfName").value.trim(), school: root.querySelector("#rfSchool").value.trim(), phone: root.querySelector("#rfPhone").value.trim(), field: best.name, agree: root.querySelector("#rfAgree").checked, website: root.querySelector("#rfWeb").value };
+      if (!body.name || !body.school) { err.textContent = "이름과 중학교를 적어 주세요."; return; }
+      if (body.phone.replace(/\D/g, "").length < 10) { err.textContent = "휴대폰 번호를 적어 주세요."; return; }
+      if (!body.agree) { err.textContent = "동의에 체크해 주세요."; return; }
+      var btn = f.querySelector("button[type=submit]"); btn.disabled = true; btn.textContent = "응모하는 중…";
+      fetch("/api/raffle", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (res) {
+          if (!res.ok) { err.textContent = res.d.error || "응모하지 못했어요."; btn.disabled = false; btn.textContent = "추첨 응모하기"; return; }
+          try { localStorage.setItem("yd_raffle_done", JSON.stringify({ name: body.name, at: Date.now() })); } catch (e2) {}
+          f.outerHTML = '<p class="g-raffle-ok" role="status">' + esc(body.name) + " 학생, 추첨 응모가 완료됐어요! 당첨되면 " + esc(body.phone) + "(으)로 연락드릴게요.</p>";
+        })
+        .catch(function () { err.textContent = "인터넷 연결을 확인하고 다시 시도해 주세요."; btn.disabled = false; btn.textContent = "추첨 응모하기"; });
     };
   }
 

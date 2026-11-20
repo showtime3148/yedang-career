@@ -49,7 +49,7 @@
     document.getElementById("rf").onclick = load;
     document.getElementById("lo").onclick = logout;
     app.innerHTML = '<p class="empty-box" style="margin-top:28px">불러오는 중…</p>';
-    Promise.all([api("/api/admin/bookings"), fetch("/api/availability").then(function (r) { return r.json(); })])
+    Promise.all([api("/api/admin/bookings"), fetch("/api/availability?t=" + Date.now()).then(function (r) { return r.json(); })])
       .then(function (r) { data = r[0].bookings || []; avail = r[1]; render(); })
       .catch(function (e) { app.innerHTML = '<p class="empty-box" style="margin-top:28px">' + esc(e.message) + "</p>"; });
   }
@@ -57,11 +57,11 @@
   function render() {
     var active = data.filter(function (b) { return b.status !== "cancelled"; });
     var up = active.filter(function (b) { return b.date >= today(); });
-    app.innerHTML = '<div class="tabs" role="tablist"><button role="tab" data-t="list" aria-selected="' + (tab === "list") + '">신청 목록</button><button role="tab" data-t="sched" aria-selected="' + (tab === "sched") + '">상담 일정 관리</button></div>' +
+    app.innerHTML = '<div class="tabs" role="tablist"><button role="tab" data-t="list" aria-selected="' + (tab === "list") + '">신청 목록</button><button role="tab" data-t="sched" aria-selected="' + (tab === "sched") + '">상담 일정 관리</button><button role="tab" data-t="raffle" aria-selected="' + (tab === "raffle") + '">경품 추첨</button></div>' +
       '<div class="stats"><div class="stat"><b>' + up.length + '</b><span>앞으로 있을 상담</span></div><div class="stat"><b>' + up.filter(function (b) { return b.status === "requested"; }).length + '</b><span>확인 필요(접수됨)</span></div><div class="stat"><b>' + active.filter(function (b) { return b.type === "family"; }).length + '</b><span>학부모 동반</span></div><div class="stat"><b>' + data.length + "</b><span>전체 신청(취소 포함)</span></div></div>" +
       '<div id="body"></div>';
     Array.prototype.forEach.call(app.querySelectorAll(".tabs button"), function (b) { b.onclick = function () { tab = b.dataset.t; render(); }; });
-    if (tab === "list") renderList(); else renderSched();
+    if (tab === "list") renderList(); else if (tab === "sched") renderSched(); else renderRaffle();
   }
 
   function renderList() {
@@ -142,9 +142,46 @@
   }
   function setBlock(kind, key, blocked) {
     api("/api/admin/blocks", { method: "POST", body: JSON.stringify({ kind: kind, key: key, blocked: blocked }) })
-      .then(function () { return fetch("/api/availability").then(function (r) { return r.json(); }); })
+      .then(function () { return fetch("/api/availability?t=" + Date.now()).then(function (r) { return r.json(); }); })
       .then(function (a) { avail = a; renderSched(); toast(blocked ? "막았습니다." : "다시 열었습니다."); })
       .catch(function (e) { toast(e.message); });
+  }
+
+  function renderRaffle() {
+    var body = document.getElementById("body");
+    body.innerHTML = '<p class="empty-box">응모자 목록을 불러오는 중…</p>';
+    api("/api/admin/raffle").then(function (d) {
+      function pool(key, title, hint, list) {
+        return '<section class="step" style="margin-bottom:18px"><h2 style="margin:0 0 4px;font-size:19px;color:var(--pine)">' + title + ' <span style="font-size:15px;color:var(--muted)">' + list.length + '명</span></h2><p style="color:var(--muted);font-size:14px;margin:0 0 14px">' + hint + '</p>' +
+          '<div class="filters"><div class="f" style="min-width:120px"><label for="n-' + key + '">뽑을 인원</label><input id="n-' + key + '" type="number" min="1" max="100" value="10"></div><button class="btn btn-primary btn-small" data-draw="' + key + '"' + (list.length ? "" : " disabled") + '>추첨하기</button><button class="btn btn-ghost btn-small" data-csv="' + key + '"' + (list.length ? "" : " disabled") + '>명단 CSV</button></div>' +
+          '<div id="win-' + key + '"></div>' +
+          '<details><summary style="cursor:pointer;font-weight:700;color:var(--tea)">명단 보기</summary><ul style="margin:10px 0 0;padding-left:18px;font-size:14px">' + list.map(function (x) { return "<li>" + esc(x.name) + " (" + esc(x.school) + ") " + esc(x.phone) + (x.field ? " · " + esc(x.field) : "") + "</li>"; }).join("") + "</ul></details></section>";
+      }
+      body.innerHTML = pool("game", "게임 완주 응모자", "'3년 미리 살기'를 끝까지 하고 응모한 학생입니다. 같은 번호는 한 번만 들어갑니다.", d.game) +
+        pool("consult", "상담 완료자", "신청 목록에서 상태를 '완료'로 바꾼 학생이 자동으로 들어갑니다.", d.consult) +
+        '<section class="step"><h2 style="margin:0 0 10px;font-size:19px;color:var(--pine)">지난 추첨 기록</h2>' + (d.draws.length ? d.draws.map(function (r) {
+          return '<p style="margin:0 0 10px;font-size:14.5px"><b>' + (r.pool === "game" ? "게임" : "상담") + " 추첨</b> " + new Date(r.at).toLocaleString("ko-KR") + " · 응모 " + r.total + "명 중 " + r.winners.length + "명<br>" + r.winners.map(function (w) { return esc(w.name) + "(" + esc(w.school) + ") " + esc(w.phone); }).join(", ") + "</p>";
+        }).join("") : '<p class="empty-box">아직 추첨하지 않았습니다.</p>') + "</section>";
+      var lists = { game: d.game, consult: d.consult };
+      Array.prototype.forEach.call(body.querySelectorAll("[data-draw]"), function (b) {
+        b.onclick = function () {
+          var key = b.dataset.draw, n = document.getElementById("n-" + key).value;
+          b.disabled = true;
+          api("/api/admin/raffle", { method: "POST", body: JSON.stringify({ pool: key, count: n }) }).then(function (r) {
+            document.getElementById("win-" + key).innerHTML = '<div class="callout" style="margin:0 0 14px"><b>당첨 ' + r.winners.length + "명</b> (응모 " + r.total + "명 중)<br>" + r.winners.map(function (w, i) { return (i + 1) + ". " + esc(w.name) + " (" + esc(w.school) + ") " + esc(w.phone); }).join("<br>") + "</div>";
+            toast("추첨 결과를 저장했습니다.");
+          }).catch(function (e) { toast(e.message); }).then(function () { b.disabled = false; });
+        };
+      });
+      Array.prototype.forEach.call(body.querySelectorAll("[data-csv]"), function (b) {
+        b.onclick = function () {
+          function c(v) { return '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"'; }
+          var rows = [["이름", "학교", "연락처", "진로", "시각"].map(c).join(",")].concat(lists[b.dataset.csv].map(function (x) { return [x.name, x.school, x.phone, x.field, new Date(x.at).toLocaleString("ko-KR")].map(c).join(","); }));
+          var blob = new Blob(["\ufeff" + rows.join("\r\n")], { type: "text/csv;charset=utf-8" });
+          var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "예당고_" + (b.dataset.csv === "game" ? "게임응모" : "상담완료") + "_" + today() + ".csv"; document.body.appendChild(a); a.click(); setTimeout(function () { a.remove(); }, 200);
+        };
+      });
+    }).catch(function (e) { body.innerHTML = '<p class="empty-box">' + esc(e.message) + "</p>"; });
   }
 
   if (token) load(); else login();

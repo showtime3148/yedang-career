@@ -728,3 +728,16 @@ footer.foot b { color: var(--pine); }
 @media (max-width: 360px) { .brand-t b { font-size: 14px; } .game-pill { padding: 6px 10px; font-size: 13px; } }
 .nav a.nav-book { display: none; }
 @media (max-width: 760px) { .nav a.nav-book { display: block; background: var(--pine); color: #fff; border-radius: 12px; padding: 12px; margin-top: 8px; border: 0; text-align: center; font-weight: 800; } }
+
+/* ───── 입학 상담 문의 띠 ───── */
+.callbar { background: var(--pine); color: #DDEBE1; font-size: 14px; }
+.callbar .wrap { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; min-height: 40px; padding: 6px 0; }
+.callbar span { color: var(--sprout); font-weight: 700; }
+.callbar b { color: #fff; font-weight: 700; }
+.callbar a { display: inline-flex; align-items: center; gap: 5px; color: var(--pine); background: var(--sprout); font-weight: 800; text-decoration: none; padding: 4px 12px; border-radius: 999px; letter-spacing: .01em; }
+.callbar a svg { width: 15px; height: 15px; }
+@media (max-width: 760px) {
+  .callbar { font-size: 13px; }
+  .callbar .wrap { gap: 6px; column-gap: 6px; }
+  .callbar a { padding: 5px 12px; font-size: 14px; }
+}

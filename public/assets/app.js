@@ -219,14 +219,14 @@
   }
 
   /* ───── 시설 둘러보기 ───── */
-  function photoURL(k) { return "/api/photo?k=" + encodeURIComponent(k); }
+  function photoURL(k, small) { return "/api/photo?k=" + encodeURIComponent(k + (small ? "-s" : "")); }
   function allFacilities() { var a = []; FAC.forEach(function (g) { g.items.forEach(function (it) { a.push(it); }); }); return a; }
   function campusTeaser() {
     var picks = ["agora", "library", "dorm", "airoom", "gym"].map(function (id) { return allFacilities().find(function (f) { return f.id === id; }); }).filter(Boolean);
     if (!picks.length) return "";
     return '<section class="block"><div class="wrap"><div class="teaser-head"><div><h2 class="h2">학교를 미리 둘러보세요</h2><p class="sub">교실, 도서관, 기숙사, 체육관까지. 사진을 누르면 크게 볼 수 있어요.</p></div><a class="btn btn-ghost" href="#/campus">시설 전체 보기</a></div>' +
       '<div class="teaser">' + picks.map(function (f, i) {
-        return '<a class="tz' + (i === 0 ? " big" : "") + '" href="#/campus/' + f.id + '"><img loading="lazy" src="' + photoURL(f.photos[0]) + '" alt="' + esc(f.name) + '"><span>' + esc(f.name) + "</span></a>";
+        return '<a class="tz' + (i === 0 ? " big" : "") + '" href="#/campus/' + f.id + '"><img loading="lazy" src="' + photoURL(f.photos[0], true) + '" alt="' + esc(f.name) + '"><span>' + esc(f.name) + "</span></a>";
       }).join("") + "</div></div></section>";
   }
   function viewCampus(openId) {
@@ -235,7 +235,7 @@
     main.innerHTML = '<div class="wrap page-head"><h1>시설 둘러보기</h1><p>예당고의 교실과 생활 공간 ' + allFacilities().length + "곳, 사진 " + total + "장. 카드를 누르면 사진을 넘겨 볼 수 있어요.</p></div>" +
       '<div class="wrap campus">' + FAC.map(function (g) {
         return '<section class="fac-group"><h2>' + esc(g.group) + '</h2><div class="fac-grid">' + g.items.map(function (f) {
-          return '<button class="fac" data-id="' + f.id + '" aria-label="' + esc(f.name) + " 사진 " + f.photos.length + '장 보기"><span class="fac-img"><img loading="lazy" src="' + photoURL(f.photos[0]) + '" alt=""><em>' + f.photos.length + '장</em></span><b>' + esc(f.name) + "</b><span>" + esc(f.desc) + "</span></button>";
+          return '<button class="fac" data-id="' + f.id + '" aria-label="' + esc(f.name) + " 사진 " + f.photos.length + '장 보기"><span class="fac-img"><img loading="lazy" src="' + photoURL(f.photos[0], true) + '" alt=""><em>' + f.photos.length + '장</em></span><b>' + esc(f.name) + "</b><span>" + esc(f.desc) + "</span></button>";
         }).join("") + "</div></section>";
       }).join("") + '<p class="src">사진: 예당고등학교 홈페이지 「시설둘러보기」</p></div>' + ctaBand();
     $$(".fac").forEach(function (b) { b.onclick = function () { openGallery(b.dataset.id, 0); }; });
@@ -248,7 +248,7 @@
     bg.className = "lb"; bg.setAttribute("role", "dialog"); bg.setAttribute("aria-modal", "true"); bg.setAttribute("aria-label", f.name + " 사진");
     bg.innerHTML = '<div class="lb-top"><div><b>' + esc(f.name) + '</b><span class="lb-n"></span></div><button class="lb-x" aria-label="닫기">✕</button></div>' +
       '<div class="lb-stage"><button class="lb-nav prev" aria-label="이전 사진">‹</button><img class="lb-img" alt=""><button class="lb-nav next" aria-label="다음 사진">›</button></div>' +
-      '<p class="lb-desc">' + esc(f.desc) + '</p><div class="lb-thumbs">' + f.photos.map(function (k, n) { return '<button data-n="' + n + '" aria-label="' + (n + 1) + '번째 사진"><img loading="lazy" src="' + photoURL(k) + '" alt=""></button>'; }).join("") + "</div>";
+      '<p class="lb-desc">' + esc(f.desc) + '</p><div class="lb-thumbs">' + f.photos.map(function (k, n) { return '<button data-n="' + n + '" aria-label="' + (n + 1) + '번째 사진"><img loading="lazy" src="' + photoURL(k, true) + '" alt=""></button>'; }).join("") + "</div>";
     document.body.appendChild(bg); document.body.style.overflow = "hidden";
     function show(n) {
       i = (n + f.photos.length) % f.photos.length;

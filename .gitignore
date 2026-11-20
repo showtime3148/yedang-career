@@ -5,3 +5,7 @@ desktop.ini
 
 # 원본 자료(용량 큰 PDF 등)를 이 폴더에 두더라도 배포에서 제외하고 싶으면 여기에 추가
 # *.pdf
+
+# 의존성
+node_modules/
+.vercel/

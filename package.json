@@ -1,0 +1,11 @@
+{
+  "name": "yedang-career",
+  "private": true,
+  "version": "2.0.0",
+  "description": "예당고 진로 내비 — 진로 탐색과 개인 상담 예약",
+  "type": "module",
+  "engines": { "node": "24.x" },
+  "dependencies": {
+    "@vercel/blob": "^2.9.0"
+  }
+}

@@ -17,6 +17,7 @@
   function ul(items, keyCount) { keyCount = keyCount || 0; return '<ul class="ul">' + items.map(function (x, i) { return '<li' + (i < keyCount ? ' class="key"' : "") + ">" + esc(x) + "</li>"; }).join("") + "</ul>"; }
   function act(a) { if (a.indexOf("P:") === 0) return PROGRAMS[a.slice(2)] || a; if (a.indexOf("C:") === 0) return CONTESTS[a.slice(2)] || a; return a; }
   var DOW = ["일", "월", "화", "수", "목", "금", "토"];
+  function addHalf(t) { var m = +t.slice(0, 2) * 60 + +t.slice(3) + 30; return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0"); }
   function fmtDate(d) { var x = new Date(d + "T00:00:00"); return (x.getMonth() + 1) + "월 " + x.getDate() + "일 (" + DOW[x.getDay()] + ")"; }
   function addMin(t, m) { var p = t.split(":").map(Number), v = p[0] * 60 + p[1] + m; return String(Math.floor(v / 60)).padStart(2, "0") + ":" + String(v % 60).padStart(2, "0"); }
 
@@ -153,7 +154,7 @@
     return '<div class="changes">' + ADM.changes.map(function (c) { return "<div><b>" + esc(c.t) + "</b><p>" + esc(c.d) + "</p></div>"; }).join("") + "</div>";
   }
   function ctaBand(fieldId) {
-    return '<section class="cta-band"><div class="wrap"><div style="flex:1 1 420px"><h2>결과를 들고 선생님과 직접 이야기해 보세요</h2><p>12월부터 2월까지 평일 오후와 토요일 오전에 개인 상담을 합니다. 부모님과 함께 오시면 학부모 상담도 이어서 진행합니다.</p></div><a class="btn btn-primary" href="#/booking' + (fieldId ? "?f=" + fieldId : "") + '">개인 상담 신청</a></div></section>';
+    return '<section class="cta-band"><div class="wrap"><div style="flex:1 1 420px"><h2>결과를 들고 선생님과 직접 이야기해 보세요</h2><p>11월부터 2월까지 평일 오후와 토요일(오전·오후)에 개인 상담을 합니다. 부모님과 함께 오시면 학부모 상담도 이어서 진행합니다.</p></div><a class="btn btn-primary" href="#/booking' + (fieldId ? "?f=" + fieldId : "") + '">개인 상담 신청</a></div></section>';
   }
 
   /* ───── 처음 화면 ───── */
@@ -261,7 +262,7 @@
       { h: "#/fields", e: "🧭", t: "분야 둘러보기", d: FIELDS.length + "개 진로 분야" },
       { h: "#/campus", e: "🏫", t: "시설 둘러보기", d: "교실·기숙사·도서관 사진" },
       { h: "#/school", e: "🍃", t: "예당고 소개", d: "AI·IB·진학 실적" },
-      { h: "#/booking", e: "🗓️", t: "개인 상담 신청", d: "12월~2월, 부모님 함께 가능" }
+      { h: "#/booking", e: "🗓️", t: "개인 상담 신청", d: "11월~2월, 부모님 함께 가능" }
     ];
     return '<nav class="qm" aria-label="바로가기 메뉴"><div class="wrap qm-grid">' +
       '<a class="qm-game" href="#/game"><span class="qm-badge">게임</span><span class="qm-ch ch walk" aria-hidden="true">' + ch + '</span>' +
@@ -527,7 +528,7 @@
       '<button class="type" role="radio" aria-checked="false" data-type="student"><b>학생 혼자</b><span>학생 진로·과목 선택·학교생활 상담</span></button>' +
       '<button class="type" role="radio" aria-checked="false" data-type="family"><b>부모님과 함께</b><span>학생 상담에 이어 학부모 상담 (입학·기숙사·IB·대입 안내 포함)</span></button>' +
       "</div></div></section>" +
-      '<section class="step locked" id="s2"><h2><span class="n">2</span>날짜와 시간 고르기</h2><p class="hint">12월~2월 평일 16:00~18:00, 토요일 10:00~12:00. 공휴일은 쉽니다.</p><div class="step-body" id="calBox"><p class="empty-box">상담 방식을 먼저 골라 주세요.</p></div></section>' +
+      '<section class="step locked" id="s2"><h2><span class="n">2</span>날짜와 시간 고르기</h2><p class="hint">11월~2월 평일 16:00~18:00, 토요일 10:00~12:00 · 13:00~17:00. 공휴일은 쉽니다.</p><div class="step-body" id="calBox"><p class="empty-box">상담 방식을 먼저 골라 주세요.</p></div></section>' +
       '<section class="step locked" id="s3"><h2><span class="n">3</span>신청 정보</h2><p class="hint">상담 전날 확인 연락을 드립니다.</p><div class="step-body">' +
       '<form class="form" id="bookForm" novalidate>' +
       '<div class="f"><label for="bName">학생 이름<i>*</i></label><input id="bName" maxlength="20" autocomplete="name" value="' + esc(id.name || "") + '"></div>' +
@@ -574,7 +575,7 @@
       // 유형에 따라 실제 선택 가능한 시작 시간
       return day.slots.map(function (s, i) {
         var ok = s.status === "open";
-        if (ok && st.type === "family") { var nx = day.slots[i + 1]; ok = !!(nx && nx.status === "open"); }
+        if (ok && st.type === "family") { var nx = day.slots[i + 1]; ok = !!(nx && nx.status === "open" && nx.time === addHalf(s.time)); }
         return { time: s.time, ok: ok, status: s.status };
       });
     }

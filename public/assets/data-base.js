@@ -41,6 +41,33 @@
     ]
   };
 
+  /* 시설 둘러보기 — 사진 출처: 예당고 홈페이지 '시설둘러보기' 게시판. photos 는 /api/photo?k= 키 */
+  function ph(id, n) { var a = []; for (var i = 1; i <= n; i++) a.push(id + "-" + i); return a; }
+  var FACILITIES = [
+    { group: "공부하는 곳", items: [
+      { id: "jayul", name: "자율학습실", desc: "스스로 공부하는 자율학습 공간입니다.", photos: ph("jayul", 3) },
+      { id: "jeongdok", name: "정독실", desc: "조용히 집중해서 공부하는 정독실입니다.", photos: ph("jeongdok", 3) },
+      { id: "library", name: "도서관 혜윰", desc: "장서 9,989권, 좌석 70여 석의 학교 도서관입니다.", photos: ph("library", 4) },
+      { id: "cafe", name: "온라인 학습카페", desc: "온라인 강의를 듣고 함께 공부하는 카페형 학습 공간입니다.", photos: ph("cafe", 4) }
+    ] },
+    { group: "AI · 미래 교실", items: [
+      { id: "agora", name: "2030교실 (2030 AI 아고라)", desc: "AI 중심 교육 활동을 하는 미래형 교실입니다.", photos: ph("agora", 2) },
+      { id: "airoom", name: "AI 인공지능 정보교육실", desc: "AI·정보 수업을 하는 교실입니다.", photos: ph("airoom", 5) },
+      { id: "maker", name: "무한상상실 (SW교실)", desc: "소프트웨어·메이커 활동을 하는 공간입니다.", photos: ph("maker", 3) },
+      { id: "computer", name: "컴퓨터실", desc: "정보 수업과 컴퓨터 실습을 하는 교실입니다.", photos: ph("computer", 1) },
+      { id: "lang", name: "어학실", desc: "1층에 있는 외국어 학습 교실입니다.", photos: ph("lang", 3) }
+    ] },
+    { group: "생활 · 기숙사", items: [
+      { id: "dorm", name: "기숙사 심경학사", desc: "학교 기숙사입니다. 야간 자기주도학습과 방과후 프로그램을 운영합니다.", photos: ph("dorm", 9) },
+      { id: "newdorm", name: "새 기숙사", desc: "새로 지은 기숙사 건물입니다.", photos: ph("newdorm", 8) }
+    ] },
+    { group: "운동 · 쉼", items: [
+      { id: "gym", name: "진은관 (체육관)", desc: "학교 실내 체육관입니다.", photos: ph("gym", 2) },
+      { id: "golf", name: "스크린 골프장", desc: "최첨단 스크린 골프장입니다.", photos: ph("golf", 4) },
+      { id: "track", name: "맨발걷기 돌길 · 모래 트랙", desc: "맨발로 걷는 마사지 돌길과 규사(모래) 트랙입니다.", photos: ph("track", 6) }
+    ] }
+  ];
+
   /* 과목 (2022 개정 교육과정 / 예당고 편제 기준) — type: 공통 / 일반 / 진로 / 융합 */
   var S = {
     gukong: { name: "공통국어1·2", type: "공통", area: "국어" },
@@ -259,5 +286,5 @@
   };
 
   window.YD = window.YD || {};
-  window.YD.base = { SCHOOL: SCHOOL, S: S, CLUBS: CLUBS, PROGRAMS: PROGRAMS, CONTESTS: CONTESTS, GROUPS: GROUPS, GRADE_COMMON: GRADE_COMMON };
+  window.YD.base = { FACILITIES: FACILITIES, SCHOOL: SCHOOL, S: S, CLUBS: CLUBS, PROGRAMS: PROGRAMS, CONTESTS: CONTESTS, GROUPS: GROUPS, GRADE_COMMON: GRADE_COMMON };
 })();

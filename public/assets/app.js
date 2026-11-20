@@ -2,7 +2,7 @@
 (function () {
   "use strict";
   var B = window.YD.base, FIELDS = window.YD.FIELDS, ADM = window.YD.ADMISSIONS;
-  var SCHOOL = B.SCHOOL, S = B.S, CLUBS = B.CLUBS, PROGRAMS = B.PROGRAMS, CONTESTS = B.CONTESTS, GROUPS = B.GROUPS, GC = B.GRADE_COMMON;
+  var FAC = B.FACILITIES || [], SCHOOL = B.SCHOOL, S = B.S, CLUBS = B.CLUBS, PROGRAMS = B.PROGRAMS, CONTESTS = B.CONTESTS, GROUPS = B.GROUPS, GC = B.GRADE_COMMON;
   var main = document.getElementById("main");
   var GROUP = {}; GROUPS.forEach(function (g) { GROUP[g.id] = g; });
   var FIELD = {}; FIELDS.forEach(function (f) { FIELD[f.id] = f; });
@@ -99,6 +99,7 @@
     if (p[0] === "f" && FIELD[p[1]]) return viewResult(FIELD[p[1]], Math.min(3, Math.max(1, +p[2] || 1)), r.q.q || "");
     if (p[0] === "fields") return viewFields();
     if (p[0] === "school") return viewSchool();
+    if (p[0] === "campus") return viewCampus(p[1] || "");
     if (p[0] === "booking") return viewBooking(r.q.f ? FIELD[r.q.f] : null, r.q.q || "");
     if (p[0] === "check") return viewCheck(r.q.id || "");
     return viewHome();
@@ -170,7 +171,7 @@
       '<div class="hero-facts"><span><b>' + FIELDS.length + "개</b>진로 분야</span><span><b>" + jobsCount + "개</b>대표 직업 정보</span><span><b>2028</b>대입 기준</span></div>" +
       "</div></section>" +
       '<section class="block" id="fields"><div class="wrap"><h2 class="h2">분야를 골라 둘러보기</h2><p class="sub">아직 장래희망이 없어도 괜찮아요. 끌리는 분야를 눌러 보세요.</p>' + groupsHTML() + "</div></section>" +
-      ctaBand() + resultsSection() +
+      ctaBand() + campusTeaser() + resultsSection() +
       '<section class="block"><div class="wrap"><h2 class="h2">예당고는 이런 학교예요</h2><p class="sub">보성 득량에 있는 기숙형 일반고. AI와 IB로 수업 방식을 바꾸고 있습니다.</p>' + schoolHTML() + "</div></section>" +
       '<section class="block"><div class="wrap"><h2 class="h2">2028 대입, 이것만은 알아 두세요</h2><p class="sub">지금 중3이 치르는 대입에서 달라지는 점입니다.</p>' + changesHTML() + "</div></section>" +
       savedHTML();
@@ -217,6 +218,60 @@
     askIdentity(function () { go(target); });
   }
 
+  /* ───── 시설 둘러보기 ───── */
+  function photoURL(k) { return "/api/photo?k=" + encodeURIComponent(k); }
+  function allFacilities() { var a = []; FAC.forEach(function (g) { g.items.forEach(function (it) { a.push(it); }); }); return a; }
+  function campusTeaser() {
+    var picks = ["agora", "library", "dorm", "airoom", "gym"].map(function (id) { return allFacilities().find(function (f) { return f.id === id; }); }).filter(Boolean);
+    if (!picks.length) return "";
+    return '<section class="block"><div class="wrap"><div class="teaser-head"><div><h2 class="h2">학교를 미리 둘러보세요</h2><p class="sub">교실, 도서관, 기숙사, 체육관까지. 사진을 누르면 크게 볼 수 있어요.</p></div><a class="btn btn-ghost" href="#/campus">시설 전체 보기</a></div>' +
+      '<div class="teaser">' + picks.map(function (f, i) {
+        return '<a class="tz' + (i === 0 ? " big" : "") + '" href="#/campus/' + f.id + '"><img loading="lazy" src="' + photoURL(f.photos[0]) + '" alt="' + esc(f.name) + '"><span>' + esc(f.name) + "</span></a>";
+      }).join("") + "</div></div></section>";
+  }
+  function viewCampus(openId) {
+    setNav("campus");
+    var total = allFacilities().reduce(function (n, f) { return n + f.photos.length; }, 0);
+    main.innerHTML = '<div class="wrap page-head"><h1>시설 둘러보기</h1><p>예당고의 교실과 생활 공간 ' + allFacilities().length + "곳, 사진 " + total + "장. 카드를 누르면 사진을 넘겨 볼 수 있어요.</p></div>" +
+      '<div class="wrap campus">' + FAC.map(function (g) {
+        return '<section class="fac-group"><h2>' + esc(g.group) + '</h2><div class="fac-grid">' + g.items.map(function (f) {
+          return '<button class="fac" data-id="' + f.id + '" aria-label="' + esc(f.name) + " 사진 " + f.photos.length + '장 보기"><span class="fac-img"><img loading="lazy" src="' + photoURL(f.photos[0]) + '" alt=""><em>' + f.photos.length + '장</em></span><b>' + esc(f.name) + "</b><span>" + esc(f.desc) + "</span></button>";
+        }).join("") + "</div></section>";
+      }).join("") + '<p class="src">사진: 예당고등학교 홈페이지 「시설둘러보기」</p></div>' + ctaBand();
+    $$(".fac").forEach(function (b) { b.onclick = function () { openGallery(b.dataset.id, 0); }; });
+    if (openId) openGallery(openId, 0);
+  }
+  function openGallery(id, start) {
+    var f = allFacilities().find(function (x) { return x.id === id; }); if (!f) return;
+    var i = start || 0, prev = document.activeElement;
+    var bg = document.createElement("div");
+    bg.className = "lb"; bg.setAttribute("role", "dialog"); bg.setAttribute("aria-modal", "true"); bg.setAttribute("aria-label", f.name + " 사진");
+    bg.innerHTML = '<div class="lb-top"><div><b>' + esc(f.name) + '</b><span class="lb-n"></span></div><button class="lb-x" aria-label="닫기">✕</button></div>' +
+      '<div class="lb-stage"><button class="lb-nav prev" aria-label="이전 사진">‹</button><img class="lb-img" alt=""><button class="lb-nav next" aria-label="다음 사진">›</button></div>' +
+      '<p class="lb-desc">' + esc(f.desc) + '</p><div class="lb-thumbs">' + f.photos.map(function (k, n) { return '<button data-n="' + n + '" aria-label="' + (n + 1) + '번째 사진"><img loading="lazy" src="' + photoURL(k) + '" alt=""></button>'; }).join("") + "</div>";
+    document.body.appendChild(bg); document.body.style.overflow = "hidden";
+    function show(n) {
+      i = (n + f.photos.length) % f.photos.length;
+      $(".lb-img", bg).src = photoURL(f.photos[i]);
+      $(".lb-img", bg).alt = f.name + " 사진 " + (i + 1);
+      $(".lb-n", bg).textContent = (i + 1) + " / " + f.photos.length;
+      $$(".lb-thumbs button", bg).forEach(function (b, n) { b.setAttribute("aria-current", n === i ? "true" : "false"); if (n === i) b.scrollIntoView({ block: "nearest", inline: "center" }); });
+      var multi = f.photos.length > 1; $$(".lb-nav", bg).forEach(function (b) { b.hidden = !multi; });
+    }
+    function close() { bg.remove(); document.body.style.overflow = ""; document.removeEventListener("keydown", key); if (prev && prev.focus) prev.focus(); if (/^#\/campus\//.test(location.hash)) history.replaceState(null, "", "#/campus"); }
+    function key(e) { if (e.key === "Escape") close(); if (e.key === "ArrowRight") show(i + 1); if (e.key === "ArrowLeft") show(i - 1); }
+    $(".lb-x", bg).onclick = close;
+    $(".prev", bg).onclick = function () { show(i - 1); };
+    $(".next", bg).onclick = function () { show(i + 1); };
+    $$(".lb-thumbs button", bg).forEach(function (b) { b.onclick = function () { show(+b.dataset.n); }; });
+    bg.addEventListener("click", function (e) { if (e.target === bg || e.target.classList.contains("lb-stage")) close(); });
+    var sx = null; var st = $(".lb-stage", bg);
+    st.addEventListener("touchstart", function (e) { sx = e.touches[0].clientX; }, { passive: true });
+    st.addEventListener("touchend", function (e) { if (sx == null) return; var dx = e.changedTouches[0].clientX - sx; if (Math.abs(dx) > 40) show(dx < 0 ? i + 1 : i - 1); sx = null; });
+    document.addEventListener("keydown", key);
+    show(i); $(".lb-x", bg).focus();
+  }
+
   /* ───── 분야 / 학교 화면 ───── */
   function viewFields() {
     setNav("fields");
@@ -226,7 +281,7 @@
   function viewSchool() {
     setNav("school");
     main.innerHTML = '<div class="wrap page-head"><h1>예당고는 이런 학교예요</h1><p>' + esc(SCHOOL.location) + ". 기숙사가 있는 농어촌 자율학교로, AI 중점학교와 IB를 함께 준비하고 있습니다.</p></div>" +
-      '<section class="block" style="padding-top:8px"><div class="wrap">' + schoolHTML() + "</div></section>" + resultsSection() +
+      '<section class="block" style="padding-top:8px"><div class="wrap">' + schoolHTML() + "</div></section>" + campusTeaser() + resultsSection() +
       '<section class="block"><div class="wrap"><h2 class="h2">2028 대입, 이것만은 알아 두세요</h2><p class="sub">지금 중3이 치르는 대입에서 달라지는 점입니다.</p>' + changesHTML() + "</div></section>" + ctaBand();
   }
 

@@ -170,9 +170,9 @@
       '<ul class="suggest" id="suggest" role="listbox"></ul></div>' +
       '<div class="chips" aria-label="예시">' + SAMPLE.map(function (s) { return '<button type="button" class="chip" data-q="' + esc(s) + '">' + esc(s) + "</button>"; }).join("") + "</div></form>" +
       '<div class="hero-facts"><span><b>' + FIELDS.length + "개</b>진로 분야</span><span><b>" + jobsCount + "개</b>대표 직업 정보</span><span><b>2028</b>대입 기준</span></div>" +
-      "</div></section>" +
+      "</div></section>" + quickMenu() +
       '<section class="block" id="fields"><div class="wrap"><h2 class="h2">분야를 골라 둘러보기</h2><p class="sub">아직 장래희망이 없어도 괜찮아요. 끌리는 분야를 눌러 보세요.</p>' + groupsHTML() + "</div></section>" +
-      gameBand() + campusTeaser() + resultsSection() + ctaBand() +
+      campusTeaser() + resultsSection() + ctaBand() +
       '<section class="block"><div class="wrap"><h2 class="h2">예당고는 이런 학교예요</h2><p class="sub">보성 득량에 있는 기숙형 일반고. AI와 IB로 수업 방식을 바꾸고 있습니다.</p>' + schoolHTML() + "</div></section>" +
       '<section class="block"><div class="wrap"><h2 class="h2">2028 대입, 이것만은 알아 두세요</h2><p class="sub">지금 중3이 치르는 대입에서 달라지는 점입니다.</p>' + changesHTML() + "</div></section>" +
       savedHTML();
@@ -224,6 +224,21 @@
     setNav("game");
     main.innerHTML = '<div class="g-wrap"><div class="wrap" id="gameRoot"></div></div>' + ctaBand();
     window.YD.game.mount(document.getElementById("gameRoot"));
+  }
+  function quickMenu() {
+    var last = store("yd_game_last"), f = last && FIELD[last.field];
+    var ch = window.YD.game && window.YD.game.charSVG ? window.YD.game.charSVG("#2C7350") : "";
+    var small = [
+      { h: "#/fields", e: "🧭", t: "분야 둘러보기", d: FIELDS.length + "개 진로 분야" },
+      { h: "#/campus", e: "🏫", t: "시설 둘러보기", d: "교실·기숙사·도서관 사진" },
+      { h: "#/school", e: "🍃", t: "예당고 소개", d: "AI·IB·진학 실적" },
+      { h: "#/booking", e: "🗓️", t: "개인 상담 신청", d: "12월~2월, 부모님 함께 가능" }
+    ];
+    return '<nav class="qm" aria-label="바로가기 메뉴"><div class="wrap qm-grid">' +
+      '<a class="qm-game" href="#/game"><span class="qm-badge">게임</span><span class="qm-ch ch walk" aria-hidden="true">' + ch + '</span>' +
+      '<span class="qm-gt"><b>3년 미리 살기</b><span>공부 시간표를 짜고 시험 12번, 동아리까지. 예당고 학생이 되어 3년을 살아 보세요.' + (f ? " 지난 결과: " + f.emoji + " " + esc(f.name) : "") + '</span><em>' + (f ? "다시 도전하기" : "게임 시작하기") + ' ▶</em><small>졸업하면 완주 기념품 + 문화상품권 추첨</small></span></a>' +
+      small.map(function (m) { return '<a class="qm-item" href="' + m.h + '"><span class="qm-e" aria-hidden="true">' + m.e + "</span><b>" + m.t + "</b><span>" + m.d + "</span></a>"; }).join("") +
+      "</div></nav>";
   }
   function gameBand() {
     var last = store("yd_game_last"), f = last && FIELD[last.field];

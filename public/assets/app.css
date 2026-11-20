@@ -626,3 +626,57 @@ footer.foot b { color: var(--pine); }
 }
 .print-only { display: none; }
 @media print { .print-only { display: block; } }
+
+/* ───── 바로가기 메뉴 (처음 화면) ───── */
+.qm { position: relative; z-index: 2; margin-top: -64px; }
+.qm-grid { display: grid; grid-template-columns: 1.6fr 1fr 1fr; grid-template-rows: auto auto; gap: 12px; }
+.qm a { text-decoration: none; color: inherit; }
+.qm-game { grid-row: span 2; position: relative; overflow: hidden; display: grid; grid-template-columns: 110px 1fr; gap: 18px; align-items: center; background: var(--sprout); color: var(--pine); border-radius: 22px; padding: 26px 28px; box-shadow: 0 18px 40px -18px rgba(20,58,43,.55); transition: transform .15s, box-shadow .15s; }
+.qm-game:hover { transform: translateY(-3px); box-shadow: 0 24px 46px -18px rgba(20,58,43,.6); }
+.qm-game::after { content: ""; position: absolute; right: -40px; bottom: -60px; width: 240px; height: 240px; border-radius: 50%; background: repeating-radial-gradient(circle, rgba(20,58,43,.08) 0 10px, transparent 10px 22px); pointer-events: none; }
+.qm-badge { position: absolute; top: 16px; left: 18px; background: var(--pine); color: var(--sprout); font-weight: 800; font-size: 12px; padding: 4px 10px; border-radius: 999px; }
+.qm-ch.ch { position: relative; left: auto; top: auto; transform: none; width: 100%; min-width: 0; margin-top: 18px; }
+.qm-gt { display: grid; gap: 6px; position: relative; z-index: 1; }
+.qm-gt b { font-size: clamp(24px, 3vw, 32px); letter-spacing: -.03em; line-height: 1.15; }
+.qm-gt span { font-size: 15px; color: #24523C; }
+.qm-gt em { font-style: normal; justify-self: start; margin-top: 6px; background: var(--pine); color: #fff; font-weight: 800; padding: 11px 20px; border-radius: 999px; font-size: 15.5px; }
+.qm-game:hover .qm-gt em { background: #0E2C20; }
+.qm-gt small { font-size: 13px; font-weight: 700; color: #2F5E46; }
+.qm-item { background: var(--white); border: 1px solid var(--line); border-radius: 18px; padding: 18px 18px 16px; display: grid; gap: 2px; align-content: start; box-shadow: 0 10px 26px -20px rgba(20,58,43,.5); transition: border-color .15s, transform .15s; }
+.qm-item:hover { border-color: var(--tea); transform: translateY(-2px); }
+.qm-e { font-size: 24px; line-height: 1; margin-bottom: 6px; }
+.qm-item b { font-size: 16.5px; color: var(--pine); letter-spacing: -.02em; }
+.qm-item span:last-child { font-size: 13.5px; color: var(--muted); }
+.nav a.nav-game { background: var(--sprout); color: var(--pine); font-weight: 800; box-shadow: 0 0 0 0 rgba(201,234,106,.9); animation: navPulse 2.6s ease-out 3; }
+.nav a.nav-game:hover { background: #BCE052; color: var(--pine); }
+.nav a.nav-game[aria-current="page"] { background: var(--pine); color: var(--sprout); }
+@keyframes navPulse { 0% { box-shadow: 0 0 0 0 rgba(160,205,60,.8); } 100% { box-shadow: 0 0 0 10px rgba(160,205,60,0); } }
+.game-pill { display: none; text-decoration: none; background: var(--sprout); color: var(--pine); font-weight: 800; font-size: 14px; padding: 7px 13px; border-radius: 999px; margin-left: auto; }
+/* 게임: 동아리 */
+.g-h3 { margin: 18px 0 10px; font-size: 16px; color: var(--pine); }
+.g-h3 small { font-size: 13px; color: var(--muted); font-weight: 600; margin-left: 6px; }
+.g-clubs { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.g-club .g-p { font-size: 13px; line-height: 1.45; }
+.pl-club { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: center; background: var(--tea-2); border-radius: 12px; padding: 10px 12px; margin-bottom: 12px; }
+.pl-club b { display: block; font-size: 15px; color: var(--pine); }
+.pl-club b em { font-style: normal; font-size: 11.5px; background: var(--pine); color: var(--sprout); padding: 2px 7px; border-radius: 999px; margin-left: 4px; vertical-align: 2px; }
+.pl-club span { font-size: 12.5px; color: var(--muted); }
+.pl-sub { margin: 0 0 8px; font-weight: 700; font-size: 14px; color: var(--pine); }
+.pl-sub small { color: var(--muted); font-weight: 600; margin-left: 4px; }
+.g-card.g-jclub { border-style: dashed; border-color: var(--tea); }
+.g-clubhist { font-weight: 700; color: var(--pine); margin: 0 0 8px; }
+@media (max-width: 900px) {
+  .qm-grid { grid-template-columns: 1fr 1fr; }
+  .qm-game { grid-column: 1 / -1; grid-row: auto; }
+}
+@media (max-width: 760px) {
+  .game-pill { display: inline-flex; gap: 4px; white-space: nowrap; flex-shrink: 0; }
+  .brand small { display: none; }
+  .game-pill + .btn { display: none; }
+  .menu-btn { margin-left: 4px; order: 3; }
+  .qm { margin-top: -48px; }
+  .qm-game { grid-template-columns: 70px 1fr; padding: 22px 18px 20px; gap: 12px; }
+  .qm-item { padding: 14px; }
+}
+@media (prefers-reduced-motion: reduce) { .nav a.nav-game { animation: none; } }
+.pl-club .pl-e { font-size: 24px; text-align: center; }

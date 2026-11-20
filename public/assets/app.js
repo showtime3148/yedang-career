@@ -521,7 +521,7 @@
     var id = identity() || {};
     var st = { type: null, month: null, date: null, time: null, avail: null };
     main.innerHTML =
-      '<div class="narrow page-head"><h1>개인 진로 상담 신청</h1><p>진로 내비 결과를 바탕으로 예당고 선생님과 1:1로 이야기합니다. 부모님과 함께 오시면 학생 상담에 이어 학부모 상담도 진행해요. 장소는 예당고등학교(' + esc(SCHOOL.location) + ")입니다.</p><p class=\"prize-note\"><b>상담 이벤트</b> 상담을 끝까지 받은 학생 중 추첨해 문화상품권을 드려요.</p></div>" +
+      '<div class="narrow page-head"><h1>개인 진로 상담 신청</h1><p>진로 도우미 결과를 바탕으로 예당고 선생님과 1:1로 이야기합니다. 부모님과 함께 오시면 학생 상담에 이어 학부모 상담도 진행해요. 장소는 예당고등학교(' + esc(SCHOOL.location) + ")입니다.</p></div>" +
       '<div class="narrow steps">' +
       '<section class="step" id="s1"><h2><span class="n">1</span>누가 오시나요?</h2><p class="hint">상담 방식을 골라 주세요.</p><div class="step-body"><div class="types" role="radiogroup" aria-label="상담 방식">' +
       '<button class="type" role="radio" aria-checked="false" data-type="student"><b>학생 혼자</b><span>학생 진로·과목 선택·학교생활 상담</span></button>' +
@@ -651,7 +651,7 @@
       $(".steps").innerHTML = '<div class="done" role="status"><h2>상담 신청이 접수됐어요</h2><p>선생님이 확인한 뒤 연락드립니다. 예약번호를 꼭 적어 두세요.</p>' +
         '<div class="code">' + esc(d.id) + "</div>" +
         "<dl><dt>상담 방식</dt><dd>" + esc(d.typeLabel) + "</dd><dt>일시</dt><dd>" + fmtDate(d.date) + " " + esc(d.time) + "</dd><dt>장소</dt><dd>예당고등학교</dd><dt>학생</dt><dd>" + esc(body.studentName) + " (" + esc(body.school) + ")</dd></dl>" +
-        '<p><b style="color:#C9EA6A">상담 이벤트</b> 상담을 끝까지 받으면 추첨으로 문화상품권을 드려요.</p><p>날짜를 바꾸거나 취소하려면 <a style="color:#C9EA6A" href="#/check?id=' + esc(d.id) + '">예약 확인</a>에서 예약번호와 전화번호 뒤 4자리(' + esc(last4) + ")를 입력하세요.</p>" +
+        '<p>날짜를 바꾸거나 취소하려면 <a style="color:#C9EA6A" href="#/check?id=' + esc(d.id) + '">예약 확인</a>에서 예약번호와 전화번호 뒤 4자리(' + esc(last4) + ")를 입력하세요.</p>" +
         '<div class="submit-row"><button class="btn btn-sprout" id="doneShot">예약 내용 저장</button><a class="btn btn-ghost" style="color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35)" href="#/">처음으로</a></div></div>';
       $("#doneShot").onclick = function () {
         download(["예당고 개인 진로 상담 예약", "예약번호: " + d.id, "상담 방식: " + d.typeLabel, "일시: " + fmtDate(d.date) + " " + d.time, "장소: 예당고등학교 (" + SCHOOL.location + ")", "학생: " + body.studentName + " (" + body.school + ")", "예약 확인·취소: " + location.origin + "/#/check?id=" + d.id].join("\n"), "예당고_상담예약_" + d.id + ".txt", "text/plain");

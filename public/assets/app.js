@@ -153,7 +153,7 @@
     return '<div class="changes">' + ADM.changes.map(function (c) { return "<div><b>" + esc(c.t) + "</b><p>" + esc(c.d) + "</p></div>"; }).join("") + "</div>";
   }
   function ctaBand(fieldId) {
-    return '<section class="cta-band"><div class="wrap"><div style="flex:1 1 420px"><h2>결과를 들고 선생님과 직접 이야기해 보세요</h2><p>12월부터 2월까지 평일 오후와 토요일 오전에 개인 상담을 합니다. 부모님과 함께 오시면 학부모 상담도 이어서 진행합니다. 상담을 끝까지 받은 학생은 추첨으로 문화상품권을 드려요.</p></div><a class="btn btn-primary" href="#/booking' + (fieldId ? "?f=" + fieldId : "") + '">개인 상담 신청</a></div></section>';
+    return '<section class="cta-band"><div class="wrap"><div style="flex:1 1 420px"><h2>결과를 들고 선생님과 직접 이야기해 보세요</h2><p>12월부터 2월까지 평일 오후와 토요일 오전에 개인 상담을 합니다. 부모님과 함께 오시면 학부모 상담도 이어서 진행합니다.</p></div><a class="btn btn-primary" href="#/booking' + (fieldId ? "?f=" + fieldId : "") + '">개인 상담 신청</a></div></section>';
   }
 
   /* ───── 처음 화면 ───── */

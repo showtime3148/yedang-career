@@ -100,6 +100,7 @@
     if (p[0] === "fields") return viewFields();
     if (p[0] === "school") return viewSchool();
     if (p[0] === "campus") return viewCampus(p[1] || "");
+    if (p[0] === "game") return viewGame();
     if (p[0] === "booking") return viewBooking(r.q.f ? FIELD[r.q.f] : null, r.q.q || "");
     if (p[0] === "check") return viewCheck(r.q.id || "");
     return viewHome();
@@ -171,7 +172,7 @@
       '<div class="hero-facts"><span><b>' + FIELDS.length + "개</b>진로 분야</span><span><b>" + jobsCount + "개</b>대표 직업 정보</span><span><b>2028</b>대입 기준</span></div>" +
       "</div></section>" +
       '<section class="block" id="fields"><div class="wrap"><h2 class="h2">분야를 골라 둘러보기</h2><p class="sub">아직 장래희망이 없어도 괜찮아요. 끌리는 분야를 눌러 보세요.</p>' + groupsHTML() + "</div></section>" +
-      ctaBand() + campusTeaser() + resultsSection() +
+      gameBand() + campusTeaser() + resultsSection() + ctaBand() +
       '<section class="block"><div class="wrap"><h2 class="h2">예당고는 이런 학교예요</h2><p class="sub">보성 득량에 있는 기숙형 일반고. AI와 IB로 수업 방식을 바꾸고 있습니다.</p>' + schoolHTML() + "</div></section>" +
       '<section class="block"><div class="wrap"><h2 class="h2">2028 대입, 이것만은 알아 두세요</h2><p class="sub">지금 중3이 치르는 대입에서 달라지는 점입니다.</p>' + changesHTML() + "</div></section>" +
       savedHTML();
@@ -216,6 +217,17 @@
     var target = "#/f/" + f.id + "/1" + (q ? "?q=" + encodeURIComponent(q) : "");
     if (identityOK(identity())) return go(target);
     askIdentity(function () { go(target); });
+  }
+
+  /* ───── 3년 미리 살기 (게임) ───── */
+  function viewGame() {
+    setNav("game");
+    main.innerHTML = '<div class="g-wrap"><div class="wrap" id="gameRoot"></div></div>' + ctaBand();
+    window.YD.game.mount(document.getElementById("gameRoot"));
+  }
+  function gameBand() {
+    var last = store("yd_game_last"), f = last && FIELD[last.field];
+    return '<section class="game-band"><div class="wrap"><div class="gb-steps" aria-hidden="true">' + ["1-1", "1-2", "2-1", "2-2", "3-1", "3-2"].map(function (x, i) { return '<span style="--i:' + i + '">' + x + "</span>"; }).join("") + '</div><div class="gb-txt"><h2>게임으로 미리 살아 보는 예당고 3년</h2><p>6학기 동안 동아리, 탐구, 봉사, 공부, 휴식 가운데 무엇을 할지 골라 보세요. 졸업할 때 나에게 맞는 진로가 나타나요.' + (f ? " 지난번 결과는 " + f.emoji + " " + esc(f.name) + "였어요." : "") + '</p><a class="btn btn-sprout" href="#/game">' + (f ? "다시 도전하기" : "게임 시작") + "</a></div></div></section>";
   }
 
   /* ───── 시설 둘러보기 ───── */
